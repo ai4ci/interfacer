@@ -484,7 +484,9 @@ type.complete = function(x) {
   x    
 }
 
-
+# TODO:
+# type.sequential
+# type.increasing
 
 #' Set a default value for a column
 #' 

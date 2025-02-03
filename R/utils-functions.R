@@ -2,10 +2,11 @@
 
 .get_fn_name = function(fn) {
   if (is.null(fn)) return("<unknown>")
-  fnenv= as.list(rlang::fn_env(fn))
+  fnenv = as.list(rlang::fn_env(fn))
   fnenv = fnenv[sapply(fnenv,is.function)]
-  fnenv = lapply(fnenv, digest::digest)
-  matches = sapply(fnenv, function(x) isTRUE(all.equal(x,digest::digest(fn))))
+  # fnenv = lapply(fnenv, digest::digest)
+  # matches = sapply(fnenv, function(x) isTRUE(all.equal(x,digest::digest(fn))))
+  matches = sapply(fnenv, identical, fn)
   if (any(matches)) return(paste0(names(fnenv)[matches],collapse = "/"))
   return("<unknown>")
 }

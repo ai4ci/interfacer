@@ -36,3 +36,8 @@ with new vignette to explain.
 
 * Specific support for `unique_id` columns (ids unique between dataframe grouping).
 * Fix issue with `imapper` defaults always being applied.
+
+# interfacer 0.3.3
+
+* performance issue fix
+* move repository to `ai4ci`

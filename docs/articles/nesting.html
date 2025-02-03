@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">interfacer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/bristol-vaccine-centre/interfacer/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ai4ci/interfacer/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -68,14 +68,14 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Nested dataframes and `purrr` style list columns</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/bristol-vaccine-centre/interfacer/blob/HEAD/vignettes/nesting.Rmd" class="external-link"><code>vignettes/nesting.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ai4ci/interfacer/blob/HEAD/vignettes/nesting.Rmd" class="external-link"><code>vignettes/nesting.Rmd</code></a></small>
       <div class="d-none name"><code>nesting.Rmd</code></div>
     </div>
 
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bristol-vaccine-centre.github.io/interfacer/">interfacer</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ai4ci.github.io/interfacer/">interfacer</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="nesting-list-columns">Nesting &amp; list columns<a class="anchor" aria-label="anchor" href="#nesting-list-columns"></a>
 </h2>
@@ -177,7 +177,7 @@ validated individually. This takes a few seconds on my machine.</p>
 <span><span class="co">#&gt; $ clarity <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> SI2, SI1, VS1, VS2, SI2, VVS2, VVS1, SI1, VS2, VS1, SI1, VS1, …</span></span>
 <span><span class="co">#&gt; $ data    <span style="color: #949494; font-style: italic;">&lt;list&gt;</span> [&lt;tbl_df[469 x 7]&gt;], [&lt;tbl_df[614 x 7]&gt;], [&lt;tbl_df[89 x 7]&gt;],…</span></span>
 <span><span class="co">#&gt;    user  system elapsed </span></span>
-<span><span class="co">#&gt;   2.948   0.006   2.954</span></span></code></pre></div>
+<span><span class="co">#&gt;   3.107   0.035   3.142</span></span></code></pre></div>
 <p>In this example the price column is removes before nesting. Errors in
 the validation of nested columns are bubbled up to the top level.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">

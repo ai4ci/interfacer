@@ -1,10 +1,9 @@
-# interfacer <a href="https://bristol-vaccine-centre.github.io/interfacer/"><img src="man/figures/logo.svg" align="right" height="139" alt="interfacer website" /></a>
+# interfacer <a href="https://ai4ci.github.io/interfacer/"><img src="man/figures/logo.svg" align="right" height="139" alt="interfacer website" /></a>
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/bristol-vaccine-centre/interfacer/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bristol-vaccine-centre/interfacer/actions/workflows/R-CMD-check.yaml)
-[![DOI](https://zenodo.org/badge/667791472.svg)](https://zenodo.org/badge/latestdoi/667791472)
-[![interfacer status
-badge](https://bristol-vaccine-centre.r-universe.dev/badges/interfacer)](https://bristol-vaccine-centre.r-universe.dev)
+[![R-CMD-check](https://github.com/ai4ci/interfacer/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ai4ci/interfacer/actions/workflows/R-CMD-check.yaml)
+[![DOI](https://zenodo.org/badge/896003024.svg)](https://doi.org/10.5281/zenodo.14794614)
+[![interfacer status badge](https://ai4ci.r-universe.dev/badges/interfacer)](https://ai4ci.r-universe.dev)
 [![CRAN status](https://www.r-pkg.org/badges/version/interfacer)](https://CRAN.R-project.org/package=interfacer)
 [![metacran downloads](https://cranlogs.r-pkg.org/badges/last-week/interfacer)](https://cran.r-project.org/package=interfacer)
 [![EPSRC badge](https://img.shields.io/badge/EPSRC%20grant-EP%2FY028392%2F1-05acb5)](https://gow.epsrc.ukri.org/NGBOViewGrant.aspx?GrantRef=EP/Y028392/1)
@@ -40,13 +39,13 @@ Suggests:
 ...
 ```
 
-This development versions of the package are hosted in the [Bristol Vaccine Centre
-r-universe](https://bristol-vaccine-centre.r-universe.dev/).
+This development versions of the package are hosted in the [AI4CI
+r-universe](https://ai4ci.r-universe.dev/).
 Installation from there is as follows:
 
 ``` r
 options(repos = c(
-  "bristol-vaccine-centre" = 'https://bristol-vaccine-centre.r-universe.dev/',
+  "ai4ci" = 'https://ai4ci.r-universe.dev/',
   CRAN = 'https://cloud.r-project.org'))
 
 # Download and install interfacer in R
@@ -60,7 +59,7 @@ Or via a DESCRIPTION file:
 Imports: 
     tidyverse,
     interfacer
-Remotes: github::bristol-vaccine-centre/interfacer
+Remotes: github::ai4ci/interfacer
 Suggests: 
     knitr,
     rmarkdown
@@ -71,7 +70,7 @@ You can also install the development version of interfacer from [GitHub](https:/
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("bristol-vaccine-centre/interfacer")
+devtools::install_github("ai4ci/interfacer")
 ```
 
 ## Example
