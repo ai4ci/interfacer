@@ -42,7 +42,7 @@ with new vignette to explain.
 * performance issue fix
 * move repository to `ai4ci`
 
-# interfacer 0.3.3
+# interfacer 0.3.4
 
 * allow renaming or preprocessing of variable names in `igroup_process` and use
 of `.groupdata` parameter in dispatch function. 
