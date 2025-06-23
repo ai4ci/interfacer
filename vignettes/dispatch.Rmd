@@ -215,30 +215,40 @@ For example if we have the following `iface` the input for a function must be
 grouped only by the `color` column:
 
 ```{r}
+ # This specification requires that the dataframe is grouped only by the color
+ # column
 i_diamond_price = interfacer::iface(
-  color = enum(`D`,`E`,`F`,`G`,`H`,`I`,`J`, .ordered=TRUE) ~ "the color column",
-  price = integer ~ "the price column",
-  .groups = ~ color
-)
+   color = enum(`D`,`E`,`F`,`G`,`H`,`I`,`J`, .ordered=TRUE) ~ "the color column",
+   price = integer ~ "the price column",
+   .groups = ~ color
+ )
 ```
 
 A package developer writing a pipeline function may use this fact to handle 
 possible additional grouping by using a `igroup_process(df, ...)` 
 
 ```{r}
- # exported function in package
- # at param can use `r idocument(ex_mean, df)` for documentation
- ex_mean = function(df = i_diamond_price, extra_param = ".") {
+# An example function which would be exported in a package
+# This function expects a dataframe with a colour and price column, grouped
+# by price.
+mean_price_by_colour = function(df = i_diamond_price, extra_param = ".") {
 
-   # dispatch based on groupings:
+   # When called with a dataframe with extra groups `igroup_process` will
+   # regroup the dataframe according to the structure
+   # defined for `i_diamond_price` and apply the inner function to each group
+   # after first calling `ivalidate` on each group.
+
    igroup_process(df,
-
      # the real work of this function is provided as an anonymous inner
-     # function (but can be any other function e.g. package private function)
-     # or a purrr style lambda.
+     # function (but can be any other function e.g. package private function
+     # but not a purrr style lambda). Ideally this function parameters are named the
+     # same as the enclosing function (here `mean_price_by_colour(df,extra_param)`), however
+     # there is some flexibility here. The special `.groupdata` parameter will
+     # be populated with the values of the unexpected grouping.
 
-     function(df, extra_param) {
+     function(df, extra_param, .groupdata) {
        message(extra_param, appendLF = FALSE)
+       if (nrow(.groupdata) == 0) message("N.B. zero length group data")
        return(df %>% dplyr::summarise(mean_price = mean(price)))
      }
 
@@ -250,25 +260,53 @@ If we pass this to correctly grouped data conforming to `i_diamond_price` the
 inner function is executed once transparently, after the input has been validated:
 
 ```{r}
-# The correctly grouped dataframe
-ggplot2::diamonds %>%
-  dplyr::group_by(color) %>%
-  ex_mean(extra_param = "without additional groups...") %>%
-  dplyr::glimpse()
+# The correctly grouped dataframe. The `ex_mean` function calculates the mean
+ # price for each `color` group.
+ ggplot2::diamonds %>%
+   dplyr::group_by(color) %>%
+   mean_price_by_colour(extra_param = "without additional groups... ") %>%
+   dplyr::glimpse()
 ```
 
-If on the other hand additional groups are present the inner function is 
-executed once for each of the additional groups. Data validation happens once
-per group, which affects interpretation of uniqueness.
+If an additionally grouped dataframe is provided by the user. The
+`mean_price_by_colour` function calculates the mean price for each
+`cut`,`clarity`, and `color` combination. Data validation happens once per
+group, which affects interpretation of uniqueness.
 
 ```{r}
-# The incorrectly grouped dataframe
 ggplot2::diamonds %>%
-  dplyr::group_by(cut, color) %>%
-  ex_mean() %>%
+  dplyr::group_by(cut, color, clarity) %>%
+  mean_price_by_colour() %>%
   dplyr::glimpse()
-
 ```
 
 The output of this is actually grouped by `cut` as the
 `color` column grouping is consumed by the nested function in `igroup_process`.
+ 
+The real power of `igroup_process` is if it is used recursively:
+
+```{r}
+ recursive_example = function(df = i_diamond_price) {
+
+   # call main function recursively if additional groups detected
+   igroup_process(df, recursive_example)
+   
+   # code after this point is only executed if the grouping is correct
+   # it will be executed once per additional group.
+   # it must return a dataframe
+
+   return(tibble::tibble("rows detected:"=nrow(df)))
+   
+ }
+
+# this input is grouped as the specification is expecting
+ ggplot2::diamonds %>% dplyr::group_by(color) %>%
+    recursive_example() %>%
+    dplyr::glimpse()
+ 
+# this input has additional grouping beyond the specification but is handled 
+# gracefully
+ ggplot2::diamonds %>% dplyr::group_by(cut,clarity,color) %>%
+    recursive_example() %>%
+    dplyr::glimpse()
+```

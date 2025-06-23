@@ -41,3 +41,10 @@ with new vignette to explain.
 
 * performance issue fix
 * move repository to `ai4ci`
+
+# interfacer 0.3.3
+
+* allow renaming or preprocessing of variable names in `igroup_process` and use
+of `.groupdata` parameter in dispatch function. 
+* `@ireturn` `roxygen2` tag for automatically picking up format from `ireturn(df,spec)`
+(n.b. this will hit the first detected value, not all of them).

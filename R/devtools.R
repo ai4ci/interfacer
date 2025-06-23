@@ -285,6 +285,154 @@ A dataframe containing the following columns:
   roxygen2::rd_section("param", out)
 }
 
+## @ireturn tags ----
+
+#' Parser for `@ireturn` tags
+#' 
+#' The `@ireturn <description>` tag can be used in `roxygen2` documentation
+#' of a function to describe a dataframe return value. The function must be using
+#' `interfacer::ireturn` to define the output dataframe format. The
+#' `@ireturn` tag will then generate documentation about the type of dataframe
+#' the function outputs.
+#' 
+#' @inheritParams roxygen2::roxy_tag_parse
+#' @concept document
+#' 
+#' @importFrom roxygen2 roxy_tag_parse
+#' @return a `roxy_tag` object with the `val` field set to the parsed value
+#' @export
+#' @examples
+#' # This provides support to `roxygen2` and only gets executed in the context
+#' # of `devtools::document()`. There is no interactive use of this function.
+roxy_tag_parse.roxy_tag_ireturn <- function(x) {
+  roxygen2::tag_value(x)
+}
+
+# .call_to_list = function(call) {
+#   if (length(call) == 1) return(call)
+#   tmp = as.list(call)
+#   for (i in seq_along(tmp)) {
+#     tmp[[i]] = .call_to_list(tmp[[i]])
+#   }
+#   return(tmp)
+# }
+
+.find_ireturn = function(call) {
+  if (length(call) == 1) return(NULL)
+  tmp = as.list(call)
+  if (tmp[[1]] == as.name("ireturn") || tmp[[1]] == as.name("interfacer::ireturn")) return(tmp[[3]])
+  for (i in seq_along(tmp)) {
+    tmp2 = .find_ireturn(tmp[[i]])
+    if (!is.null(tmp2)) return(tmp2)
+  }
+  return(NULL)
+}
+
+#' Support for `@ireturn` tags
+#' 
+#' The `@ireturn <description>` tag can be used in `roxygen2` documentation
+#' of a function to describe a dataframe return value. The function must be using
+#' `interfacer::ireturn` to validate the output dataframe parameter format. The
+#' `@ireturn` tag will then generate documentation about the type of dataframe
+#' the function is returning.
+#' 
+#' @inheritParams roxygen2::roxy_tag_rd
+#' 
+#' @importFrom roxygen2 roxy_tag_rd
+#' @concept document
+#' @return an `roxygen2::rd_section` (see `roxygen2` documentation)
+#' @export
+#' 
+#' @examples 
+#' 
+#' # An example function definition:
+#' fn_definition <- "
+#' #' This is a title
+#' #' 
+#' #' This is the description.
+#' #' 
+#' #' @md
+#' #' @ireturn the output dataframe
+#' #' @export
+#' f <- function() {
+#'   interfacer::ireturn(iris,
+#'     interfacer::iface(
+#'       Sepal.Length = numeric ~ \"the Sepal.Length column\",
+#'       Sepal.Width = numeric ~ \"the Sepal.Width column\",
+#'       Petal.Length = numeric ~ \"the Petal.Length column\",
+#'       Petal.Width = numeric ~ \"the Petal.Width column\",
+#'       Species = enum(`setosa`,`versicolor`,`virginica`) ~ \"the Species column\",
+#'       .groups = NULL
+#'     ))
+#' }
+#' "
+#' 
+#' # For this example we manually parse the function specification in `fn_definition`
+#' # creating a .Rd block - normally this is done by `roxygen2` which then
+#' # writes this to an .Rd file. This function is not intended to be used 
+#' # outside of a call to `devtools::document`.
+#' 
+#' tmp = roxygen2::parse_text(fn_definition)
+#' print(tmp[[1]])
+#' 
+roxy_tag_rd.roxy_tag_ireturn <- function(x, base_path, env) {
+  
+  desc = x$val
+  block = .search_call_stack(.class="roxy_block")
+  fn = block$object$value
+  icall = .find_ireturn(body(fn))
+  
+  if (rlang::is_missing(icall) || is.null(icall)) {
+    # There is no formal parameter with a default value (or maybe it is given as NULL)
+    # we do not try and include it in the documentation
+    warning("No interfacer::ireturn(df, spec) call found in function body")
+    out = desc
+  } else {
+    
+    # There is a ireturn call. We try and interpret it
+    spec = tryCatch(
+      # try evaluate the call as an iface.
+      eval(icall,envir = rlang::fn_env(fn)),
+      error = function(e) {
+        # just return the raw call
+        as.character(icall)
+      }
+    )
+    
+    if (is.iface(spec)) {
+      grps = attr(spec,"groups")
+      allow_other = attr(spec,"allow_other")
+      if (allow_other) {
+        if (length(grps)==0) g = "Any grouping possible."
+        else g = sprintf("Minimally grouped by: %s (and other groupings may be present).",paste0(grps,collapse = " + "))
+      } else {
+        if (length(grps)==0) g = "Ungrouped."
+        else g = sprintf("Grouped by: %s (exactly).",paste0(grps,collapse = " + "))
+      }
+      
+      out = sprintf("%s
+
+A dataframe containing the following columns: 
+\\itemize{
+%s
+}
+
+%s
+",
+    desc,
+    paste0(glue::glue_data(spec, "\\item {name} ({type}) - {doc}"), collapse = "\n"),
+    g
+      ) %>% trimws()
+    } else {
+      # spec evaluated to something but not an iface spec. We'll 
+      out = sprintf("%s - (defaults to \\code{%s})", desc, deparse(spec))
+      
+    }
+  }
+  roxygen2::rd_section("value", out)
+}
+
+## usethis style functions ----
 
 #' Use a dataframe in a package including structure based documentation
 #' 

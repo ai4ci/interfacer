@@ -304,7 +304,10 @@ as.list.iface = function(x, ..., flatten=FALSE) {
     )
     icall = iface()
   }
-  spec = eval(icall,envir = rlang::fn_env(fn))
+  spec = tryCatch(
+    eval(icall,envir = rlang::fn_env(fn)),
+    error = function(e) stop("Could not evaluate interface definition: ",icall)
+  )
   return(spec)
 }
 

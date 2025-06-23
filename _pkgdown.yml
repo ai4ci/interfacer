@@ -11,7 +11,7 @@ reference:
 - title: Parameter consistency checks
 - contents:
   - has_concept("parameter_checks")
-- title: Roxygen documentation
+- title: roxygen2 documentation
 - contents:
   - has_concept("document")
 - title: Others

@@ -67,10 +67,10 @@ ivalidate = function(df = NULL, ..., .imap=imapper(), .prune=FALSE, .default = N
 }
 
 
-#' Check a return parameter from a function
+#' Validate and return a value from a function
 #'
 #' This is intended to be used within a function to check the validity of a data
-#' frame being returned from a function against an `ispec` which is provided.
+#' frame being returned from a function against the provided `iface` specification.
 #'
 #' @param df a dataframe - if missing then the first parameter of the calling
 #'   function is assumed to be a dataframe.
@@ -92,6 +92,7 @@ ivalidate = function(df = NULL, ..., .imap=imapper(), .prune=FALSE, .default = N
 #'   df = ivalidate(...)
 #'   tmp = df %>% dplyr::rename(col_out = col_in)
 #'   ireturn(tmp, output)
+#'   message("not executed")
 #' }
 #' x(tibble::tibble(col_in = c(1,2,3)))
 #' output
@@ -101,6 +102,7 @@ ireturn = function(df, iface, .prune=FALSE) {
   #TODO: bypass checks if the function is run in development
   
   spec = iface
+  env = rlang::caller_env()
   fn = rlang::caller_fn()
   fname = .get_fn_name(fn)
   out = df
@@ -163,7 +165,10 @@ ireturn = function(df, iface, .prune=FALSE) {
     out = out %>% dplyr::select(tidyselect::all_of(unique(c(exp_cols,allowed_grps))))
   }
   out = out %>% .coerce(spec, fname)
-  return(out)
+  # return(out)
+  env[[".iface_output"]] = out
+  # trigger a return(.output) from that environment.
+  rlang::eval_bare(quote(return(.iface_output)), env)
 }
   
 

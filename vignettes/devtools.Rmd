@@ -120,22 +120,25 @@ test_function.type1 = function(df = i_type2) {
 
 If, as in the previous example, the `iface` definitions are defined as package
 local variables it is also possible to refer directly to these variables
-in the documentation where they will be expanded to their definition. This is
-also the recommended way to document return values:
+in the documentation where they will be expanded to their definition. This can 
+be combined to document return values using the `roxygen2` `@ireturn` tag that 
+picks up format definitions from the call to `ireturn(value, spec)` in the 
+function body.
 
 ```{r eval=FALSE}
 
-# This may be defined in the file R/interfaces.R
+# This can be defined in another file such as R/interfaces.R
 i_input_type = interfacer::iface(col1 = integer ~ "An integer value")
 i_return_type = interfacer::iface(output = date ~ "A date value")
 
 #' An example function
 #' 
-#' @param df An input dataframe conforming to:
-#' `r i_input_type` 
-#'
-#' @return a dataframe of the following format: 
-#' `r i_return_type`
+#' The parameter and return values will be expanded to describe the
+#' input and output formats defined above.
+#' 
+#' @iparam df An input dataframe
+#' @ireturn A description of the output dataframe
+#' 
 test_function = function(df = i_input_type) {
   df = interfacer::ivalidate(df)
   # ... main function body ...

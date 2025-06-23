@@ -10,8 +10,12 @@ igroup_process(df = NULL, fn, ...)
 \item{df}{a dataframe from an enclosing function in which the grouping may or
 may not have been correctly supplied.}
 
-\item{fn}{a function to call with the correctly grouped dataframe as specified
-by the \code{iface} in the enclosing function.}
+\item{fn}{a function to call with the correctly grouped dataframe as
+specified by the \code{iface} in the enclosing function. This must be a function
+(not a \code{purrr} style lambda) and share parameter naming with the enclosing
+function. The first parameter of this dispatch function must be the
+dataframe (correctly grouped), and other named parameters here are looked
+for in the enclosing function call. The function \emph{must} return a dataframe.}
 
 \item{...}{passed onto \code{iconvert} this could be used to supply
 \code{.prune} parameters. triple dot parameters in the enclosing function will
@@ -30,10 +34,10 @@ have an \code{iface} specified for that dataframe.
 }
 \details{
 This function detects when the grouping of the input has additional groups
-over and above those in the specification and intercepts them, regrouping
-the dataframe and applying \code{fn} group-wise using an equivalent of a
-\code{dplyr::group_modify}. The parameters provided to the enclosing function will be
-passed to \code{fn} and they should have compatible method signatures.
+over and above those in the specification and intercepts them, regrouping the
+dataframe and applying \code{fn} group-wise using an equivalent of a
+\code{dplyr::group_modify}. The parameters provided to the enclosing function will
+be passed to \code{fn} and they should have compatible method signatures.
 }
 \examples{
 
@@ -46,7 +50,9 @@ i_diamond_price = interfacer::iface(
 )
 
 # An example function which would be exported in a package
-ex_mean = function(df = i_diamond_price, extra_param = ".") {
+# This function expects a dataframe with a colour and price column, grouped
+# by price.
+mean_price_by_colour = function(df = i_diamond_price, extra_param = ".") {
   
   # When called with a dataframe with extra groups `igroup_process` will 
   # regroup the dataframe according to the structure 
@@ -56,11 +62,15 @@ ex_mean = function(df = i_diamond_price, extra_param = ".") {
   igroup_process(df, 
     
     # the real work of this function is provided as an anonymous inner
-    # function (but can be any other function e.g. package private function)
-    # or a purrr style lambda.
+    # function (but can be any other function e.g. package private function
+    # but not a purrr style lambda). Ideally this function parameters are named the
+    # same as the enclosing function (here `ex_mean(df,extra_param)`), however 
+    # there is some flexibility here. The special `.groupdata` parameter will
+    # be populated with the values of the unexpected grouping.
     
-    function(df, extra_param) {
+    function(df, extra_param, .groupdata) {
       message(extra_param, appendLF = FALSE)
+      if (nrow(.groupdata) == 0) message("zero length group data") 
       return(df \%>\% dplyr::summarise(mean_price = mean(price)))
     }
     
@@ -71,7 +81,7 @@ ex_mean = function(df = i_diamond_price, extra_param = ".") {
 # price for each `color` group.
 ggplot2::diamonds \%>\% 
   dplyr::group_by(color) \%>\% 
-  ex_mean(extra_param = "without additional groups...") \%>\% 
+  mean_price_by_colour(extra_param = "without additional groups...") \%>\% 
   dplyr::glimpse()
   
 # If an additionally grouped dataframe is provided by the user. The `ex_mean` 
@@ -80,11 +90,29 @@ ggplot2::diamonds \%>\%
 
 ggplot2::diamonds \%>\% 
   dplyr::group_by(cut, color, clarity) \%>\% 
-  ex_mean() \%>\% 
+  mean_price_by_colour() \%>\% 
   dplyr::glimpse()
   
 # The output of this is actually grouped by cut then clarity as
-# color is consumed by the igroup_dispatch summarise.
+# color is consumed by the `igroup_dispatch`.
 
+# This example is somewhat contorted. The real power of `igroup_process` is 
+# if it is used recursively:
+
+recursive_example = function(df = i_diamond_price) {
+  
+  # call main function recursively if additional groups detected
+  igroup_process(df, recursive_example)
+  
+  # otherwise proceed with function as normal
+  return(tibble::tibble("rows detected:"=nrow(df)))
+}
+
+ggplot2::diamonds \%>\% dplyr::group_by(color) \%>\% 
+   recursive_example() \%>\% 
+   dplyr::glimpse()
+ggplot2::diamonds \%>\% dplyr::group_by(cut,clarity,color) \%>\% 
+   recursive_example() \%>\%
+   dplyr::glimpse()
 }
 \concept{interface}

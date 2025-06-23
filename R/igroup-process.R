@@ -7,15 +7,19 @@
 #' have an `iface` specified for that dataframe. 
 #' 
 #' This function detects when the grouping of the input has additional groups
-#' over and above those in the specification and intercepts them, regrouping
-#' the dataframe and applying `fn` group-wise using an equivalent of a 
-#' `dplyr::group_modify`. The parameters provided to the enclosing function will be 
-#' passed to `fn` and they should have compatible method signatures.
+#' over and above those in the specification and intercepts them, regrouping the
+#' dataframe and applying `fn` group-wise using an equivalent of a
+#' `dplyr::group_modify`. The parameters provided to the enclosing function will
+#' be passed to `fn` and they should have compatible method signatures.
 #'
 #' @param df a dataframe from an enclosing function in which the grouping may or
 #'   may not have been correctly supplied.
-#' @param fn a function to call with the correctly grouped dataframe as specified
-#'   by the `iface` in the enclosing function.
+#' @param fn a function to call with the correctly grouped dataframe as
+#'   specified by the `iface` in the enclosing function. This must be a function
+#'   (not a `purrr` style lambda) and share parameter naming with the enclosing
+#'   function. The first parameter of this dispatch function must be the
+#'   dataframe (correctly grouped), and other named parameters here are looked
+#'   for in the enclosing function call. The function *must* return a dataframe.
 #' @param ... passed onto `iconvert` this could be used to supply 
 #'   `.prune` parameters. triple dot parameters in the enclosing function will
 #'   be separately handled and automatically passed to `fn` so in general should
@@ -39,7 +43,9 @@
 #' )
 #' 
 #' # An example function which would be exported in a package
-#' ex_mean = function(df = i_diamond_price, extra_param = ".") {
+#' # This function expects a dataframe with a colour and price column, grouped
+#' # by price.
+#' mean_price_by_colour = function(df = i_diamond_price, extra_param = ".") {
 #'   
 #'   # When called with a dataframe with extra groups `igroup_process` will 
 #'   # regroup the dataframe according to the structure 
@@ -49,11 +55,15 @@
 #'   igroup_process(df, 
 #'     
 #'     # the real work of this function is provided as an anonymous inner
-#'     # function (but can be any other function e.g. package private function)
-#'     # or a purrr style lambda.
+#'     # function (but can be any other function e.g. package private function
+#'     # but not a purrr style lambda). Ideally this function parameters are named the
+#'     # same as the enclosing function (here `ex_mean(df,extra_param)`), however 
+#'     # there is some flexibility here. The special `.groupdata` parameter will
+#'     # be populated with the values of the unexpected grouping.
 #'     
-#'     function(df, extra_param) {
+#'     function(df, extra_param, .groupdata) {
 #'       message(extra_param, appendLF = FALSE)
+#'       if (nrow(.groupdata) == 0) message("zero length group data") 
 #'       return(df %>% dplyr::summarise(mean_price = mean(price)))
 #'     }
 #'     
@@ -64,7 +74,7 @@
 #' # price for each `color` group.
 #' ggplot2::diamonds %>% 
 #'   dplyr::group_by(color) %>% 
-#'   ex_mean(extra_param = "without additional groups...") %>% 
+#'   mean_price_by_colour(extra_param = "without additional groups...") %>% 
 #'   dplyr::glimpse()
 #'   
 #' # If an additionally grouped dataframe is provided by the user. The `ex_mean` 
@@ -73,35 +83,45 @@
 #' 
 #' ggplot2::diamonds %>% 
 #'   dplyr::group_by(cut, color, clarity) %>% 
-#'   ex_mean() %>% 
+#'   mean_price_by_colour() %>% 
 #'   dplyr::glimpse()
 #'   
 #' # The output of this is actually grouped by cut then clarity as
-#' # color is consumed by the igroup_dispatch summarise.
+#' # color is consumed by the `igroup_dispatch`.
 #' 
+#' # This example is somewhat contorted. The real power of `igroup_process` is 
+#' # if it is used recursively:
+#' 
+#' recursive_example = function(df = i_diamond_price) {
+#'   
+#'   # call main function recursively if additional groups detected
+#'   igroup_process(df, recursive_example)
+#'   
+#'   # otherwise proceed with function as normal
+#'   return(tibble::tibble("rows detected:"=nrow(df)))
+#' }
+#' 
+#' ggplot2::diamonds %>% dplyr::group_by(color) %>% 
+#'    recursive_example() %>% 
+#'    dplyr::glimpse()
+#' ggplot2::diamonds %>% dplyr::group_by(cut,clarity,color) %>% 
+#'    recursive_example() %>%
+#'    dplyr::glimpse()
 igroup_process = function(df = NULL, fn, ...) {
   
   dispatch_fn = rlang::as_function(fn)
-  # Get the spec from the enclosing function
+  # Get the spec from the enclosing/caller function
   dname = tryCatch(rlang::as_label(rlang::ensym(df)), error = function(e) return(NA))
-  fn = rlang::caller_fn()
-  if (is.null(fn)) stop("`igroup_dispatch` must be called from within an enclosing function.", call. = FALSE)
+  caller_fn = rlang::caller_fn()
+  if (is.null(caller_fn)) stop("`igroup_dispatch(...)` must be called from within an enclosing function.", call. = FALSE)
   if (is.na(dname)) {
     df = .get_first_param_value()
     dname = .get_first_param_name()
   }
-  fname = .get_fn_name(fn)
-  spec = .get_spec(fn, dname)
+  fname = .get_fn_name(caller_fn)
+  spec = .get_spec(caller_fn, dname)
   
-  # TODO: the parameter name can be incorrect if the inner function is defined
-  # using a different naming convention or more importantly if the variable is 
-  # renamed:
-  # function(x = iface(...)) {
-  #   x2 = x
-  #   igroup_process(x2, function(y) {...})
-  # }
-  # the logic to find dname finds the wrong name and cant match it to the spec. 
-  # possibly because it is looking at the wrong function...
+  
   
   exp_grps = .spec_grps(spec)
   obs_grps = dplyr::group_vars(df)
@@ -110,7 +130,7 @@ igroup_process = function(df = NULL, fn, ...) {
   # have to dispatch using declared params from caller environment
   env = rlang::caller_env()
   # get any dots
-  if ("..." %in% names(formals(fn))) {
+  if ("..." %in% names(formals(caller_fn))) {
     # evaluate `...` in the caller function environment.
     tmp = do.call(rlang::list2, list(as.symbol("...")), envir = env)
     params = c(as.list(env), tmp)
@@ -131,23 +151,53 @@ igroup_process = function(df = NULL, fn, ...) {
     )
   }
   
+  # the parameter name can be incorrect if the inner function is defined
+  # using a different naming convention or more importantly if the variable is 
+  # renamed:
+  # function(x = iface(...)) {
+  #   x2 = x
+  #   igroup_process(x2, function(y) {...})
+  # }
+  # the dispatch function must take a dataframe as the first parameter
+  dispatch_dname = names(formals(dispatch_fn))[[1]]
+  # if (dispatch_dname != dname) ... could log this if core R had a debug logger ...
+  dispatch_has_dots = "..." %in% names(formals(dispatch_fn))
+  if (!dispatch_has_dots) {
+    # subset to expected dispatch function parameters.
+    params = params[names(params) %in% names(formals(dispatch_fn))]
+  }
+  dispatch_expects_groups = ".groupdata" %in% names(formals(dispatch_fn)) & !".groupdata" %in% names(params)
   
   
   if (length(additional_grps) == 0) {
-    df = iconvert(df, spec, ...)
-    if (!is.null(df)) {
-      params[[dname]] = df
-      return(do.call(dispatch_fn, params, envir = env))
+    if (identical(caller_fn, dispatch_fn)) {
+      ## recursion detected. we need to exist the igroup_process loop and 
+      ## return to the calling function to complete it
+      return(NULL)
+    } else {
+      df = iconvert(df, spec, ...)
+      if (is.null(df)) stop("Could not validate dataframe input.", call. = FALSE)
+      params[[dispatch_dname]] = df
+      # no additional groups here so grouping is an empty tibble
+      if (dispatch_expects_groups) params[[".groupdata"]] = tibble::tibble()
+      if (!all(names(formals(dispatch_fn)) %in% names(params))) {
+        stop(
+          sprintf("igroup_process(...) call in function %s(...) failed because the dispatch",dname),
+          sprintf("function could not resolve parameters: %s",paste0(setdiff(names(formals(dispatch_fn)), names(params)),collapse = ",")),
+          .call = FALSE
+        )
+      }
+      out = do.call(dispatch_fn, params, envir = env)
     }
-    stop("Could not validate dataframe input.", call. = FALSE)
   } else {
-    # wrap the call to fn in a group_modify
+    # wrap the call to fn in a group_modify grouped with the unexpected groupings
     df = df %>% dplyr::group_by(dplyr::across(dplyr::all_of(additional_grps)))
     out = df %>% dplyr::group_modify(function(d,g,...) {
-      # Fix any residual grouping issues:
+      # Fix any residual grouping issues, making sure that the grouping in the
+      # dispatch function :
       d = d %>% dplyr::group_by(dplyr::across(dplyr::all_of(exp_grps)))
       d = tryCatch(
-        iconvert(d, spec, ...),
+        iconvert(d, spec, ...), # validate the dataframe in the expected grouping
         error = function(e) {
           stop(
             "Could not validate dataframe input in group:\n",
@@ -158,11 +208,27 @@ igroup_process = function(df = NULL, fn, ...) {
         }
       )
       if (!is.null(d)) {
-        params[[dname]] = d
+        params[[dispatch_dname]] = d
+        # we are in a group_modify here and g is the single line tibble of the grouping values:
+        if (dispatch_expects_groups) params[[".groupdata"]] = g
+        if (!all(names(formals(dispatch_fn)) %in% names(params))) {
+          stop(sprintf(
+            sprintf("igroup_process(...) call in function %s(...) failed because the dispatch",dname),
+            sprintf("function could not resolve parameters: %s",paste0(setdiff(names(formals(dispatch_fn)), names(params)),collapse = ",")),
+            .call = FALSE
+          ))
+        }
         return(do.call(dispatch_fn, params, envir = env))
       }
       stop("Could not validate dataframe input", call. = FALSE)
     })
-    return(out)
+    
   }
+  # insert the output dataframe into the environment that called igroup_process
+  env[[".iface_output"]] = out
+  # trigger a return(.output) from that environment.
+  rlang::eval_bare(quote(return(.iface_output)), env) 
+  
 }
+
+

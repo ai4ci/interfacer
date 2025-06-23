@@ -2,7 +2,7 @@
 % Please edit documentation in R/interfacer.R
 \name{ireturn}
 \alias{ireturn}
-\title{Check a return parameter from a function}
+\title{Validate and return a value from a function}
 \usage{
 ireturn(df, iface, .prune = FALSE)
 }
@@ -20,7 +20,7 @@ data-types coerced, and correct grouping applied to conform to \code{iface}
 }
 \description{
 This is intended to be used within a function to check the validity of a data
-frame being returned from a function against an \code{ispec} which is provided.
+frame being returned from a function against the provided \code{iface} specification.
 }
 \examples{
 
@@ -31,6 +31,7 @@ x = function(df = input, ...) {
   df = ivalidate(...)
   tmp = df \%>\% dplyr::rename(col_out = col_in)
   ireturn(tmp, output)
+  message("not executed")
 }
 x(tibble::tibble(col_in = c(1,2,3)))
 output
