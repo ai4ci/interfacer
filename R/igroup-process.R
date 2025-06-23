@@ -180,9 +180,9 @@ igroup_process = function(df = NULL, fn, ...) {
       params[[dispatch_dname]] = df
       # no additional groups here so grouping is an empty tibble
       if (dispatch_expects_groups) params[[".groupdata"]] = tibble::tibble()
-      if (!all(names(formals(dispatch_fn)) %in% names(params))) {
+      if (!all(names(formals(dispatch_fn)) %in% c("...",names(params)))) {
         stop(
-          sprintf("igroup_process(...) call in function %s(...) failed because the dispatch",dname),
+          sprintf("igroup_process(...) call in function %s(...) failed because the dispatch ",dname),
           sprintf("function could not resolve parameters: %s",paste0(setdiff(names(formals(dispatch_fn)), names(params)),collapse = ",")),
           .call = FALSE
         )
@@ -211,7 +211,7 @@ igroup_process = function(df = NULL, fn, ...) {
         params[[dispatch_dname]] = d
         # we are in a group_modify here and g is the single line tibble of the grouping values:
         if (dispatch_expects_groups) params[[".groupdata"]] = g
-        if (!all(names(formals(dispatch_fn)) %in% names(params))) {
+        if (!all(names(formals(dispatch_fn)) %in% c("...",names(params)))) {
           stop(sprintf(
             sprintf("igroup_process(...) call in function %s(...) failed because the dispatch",dname),
             sprintf("function could not resolve parameters: %s",paste0(setdiff(names(formals(dispatch_fn)), names(params)),collapse = ",")),
