@@ -166,8 +166,20 @@ igroup_process = function(df = NULL, fn, ...) {
     # subset to expected dispatch function parameters.
     params = params[names(params) %in% names(formals(dispatch_fn))]
   }
+  
   dispatch_expects_groups = ".groupdata" %in% names(formals(dispatch_fn)) & !".groupdata" %in% names(params)
   
+  missing_dispatch_params = setdiff(
+    names(formals(dispatch_fn)), c("...",names(params),dispatch_dname,".groupdata")
+  )
+  
+  if (length(missing_dispatch_params) > 0) {
+    stop(
+      sprintf("`igroup_process(...)` call in function `%s(...)` failed because the dispatch ",fname),
+      sprintf("function could not resolve parameters: %s",paste0(missing_dispatch_params,collapse = ",")),
+      call. = FALSE
+    )
+  }
   
   if (length(additional_grps) == 0) {
     if (identical(caller_fn, dispatch_fn)) {
@@ -180,13 +192,6 @@ igroup_process = function(df = NULL, fn, ...) {
       params[[dispatch_dname]] = df
       # no additional groups here so grouping is an empty tibble
       if (dispatch_expects_groups) params[[".groupdata"]] = tibble::tibble()
-      if (!all(names(formals(dispatch_fn)) %in% c("...",names(params)))) {
-        stop(
-          sprintf("igroup_process(...) call in function %s(...) failed because the dispatch ",dname),
-          sprintf("function could not resolve parameters: %s",paste0(setdiff(names(formals(dispatch_fn)), names(params)),collapse = ",")),
-          .call = FALSE
-        )
-      }
       out = do.call(dispatch_fn, params, envir = env)
     }
   } else {
@@ -211,13 +216,6 @@ igroup_process = function(df = NULL, fn, ...) {
         params[[dispatch_dname]] = d
         # we are in a group_modify here and g is the single line tibble of the grouping values:
         if (dispatch_expects_groups) params[[".groupdata"]] = g
-        if (!all(names(formals(dispatch_fn)) %in% c("...",names(params)))) {
-          stop(sprintf(
-            sprintf("igroup_process(...) call in function %s(...) failed because the dispatch",dname),
-            sprintf("function could not resolve parameters: %s",paste0(setdiff(names(formals(dispatch_fn)), names(params)),collapse = ",")),
-            .call = FALSE
-          ))
-        }
         return(do.call(dispatch_fn, params, envir = env))
       }
       stop("Could not validate dataframe input", call. = FALSE)
@@ -225,7 +223,7 @@ igroup_process = function(df = NULL, fn, ...) {
     
   }
   # insert the output dataframe into the environment that called igroup_process
-  env[[".iface_output"]] = out
+  env[[".iface_output"]] = out %>% .recover_attributes(df)
   # trigger a return(.output) from that environment.
   rlang::eval_bare(quote(return(.iface_output)), env) 
   

@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">interfacer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,12 +122,14 @@ removing the relevant comment in <code>R/interfaces.R</code></p>
 there is inevitably a reminder to document your data. When you are
 embedding a dataframe <code>interfacer</code> can inspect your dataframe
 and generate a template data documentation into <code>R/data.R</code> at
-the same this as embedding the data.</p>
+the same this as embedding the data to ease this pain.</p>
 <p>This is triggered with a call to, for example,
 <code>interfacer::use_dataframe(mtcars)</code> which will create an
 entry in <code>R/data.R</code> for your dataframe documentation.</p>
 <p>This function uses the <code>interfacer</code> framework to generate
-the documentation but does not need it afterwards.</p>
+the documentation but does not need it afterwards, so you can use this
+without putting interfacer in your description file, if that is all you
+want to use the package for.</p>
 </div>
 <div class="section level2">
 <h2 id="roxygen2-documentation">
@@ -157,13 +159,14 @@ specification from the current function and parameter. A more flexible
 alternative is provided by <code><a href="../reference/idocument.html">idocument()</a></code> which allows you to
 specify the function and parameter you wish to document. This is useful
 if documenting a generic function that may dispatch to multiple
-functions based on the dataframe structures.</p>
+functions based on the dataframe structures. In the future we will try
+and automate this.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># This may be defined in the file R/interfaces.R</span></span>
 <span><span class="va">i_type1</span> <span class="op">=</span> <span class="fu">interfacer</span><span class="fu">::</span><span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span>col1 <span class="op">=</span> <span class="va">integer</span> <span class="op">~</span> <span class="st">"An integer value"</span><span class="op">)</span></span>
 <span><span class="va">i_type2</span> <span class="op">=</span> <span class="fu">interfacer</span><span class="fu">::</span><span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span>col1 <span class="op">=</span> <span class="va">date</span> <span class="op">~</span> <span class="st">"A date value"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">#' A mulitple dispatch function</span></span>
+<span><span class="co">#' A multiple dispatch function</span></span>
 <span><span class="co">#' </span></span>
 <span><span class="co">#' @param df An input dataframe conforming to one of:</span></span>
 <span><span class="co">#' `r interfacer::idocument(test_function.type1, df)`</span></span>
@@ -185,13 +188,14 @@ functions based on the dataframe structures.</p>
 <span><span class="va">test_function.type1</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span> <span class="op">=</span> <span class="va">i_type2</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># ... deal with date input ...</span></span>
 <span><span class="op">}</span></span></code></pre></div>
+<p>Return values using the <code>roxygen2</code> <code>@ireturn</code>
+tag that picks up format definitions from the (first) call to
+<code>ireturn(value, spec)</code> in the function body. This is then
+used to describe the format of the output dataframe.</p>
 <p>If, as in the previous example, the <code>iface</code> definitions
 are defined as package local variables it is also possible to refer
 directly to these variables in the documentation where they will be
-expanded to their definition. This can be combined to document return
-values using the <code>roxygen2</code> <code>@ireturn</code> tag that
-picks up format definitions from the call to
-<code>ireturn(value, spec)</code> in the function body.</p>
+expanded to their definition.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># This can be defined in another file such as R/interfaces.R</span></span>
 <span><span class="va">i_input_type</span> <span class="op">=</span> <span class="fu">interfacer</span><span class="fu">::</span><span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span>col1 <span class="op">=</span> <span class="va">integer</span> <span class="op">~</span> <span class="st">"An integer value"</span><span class="op">)</span></span>
@@ -200,7 +204,7 @@ picks up format definitions from the call to
 <span><span class="co">#' An example function</span></span>
 <span><span class="co">#' </span></span>
 <span><span class="co">#' The parameter and return values will be expanded to describe the</span></span>
-<span><span class="co">#' input and output formats defined above.</span></span>
+<span><span class="co">#' input and output dataframe formats defined above.</span></span>
 <span><span class="co">#' </span></span>
 <span><span class="co">#' @iparam df An input dataframe</span></span>
 <span><span class="co">#' @ireturn A description of the output dataframe</span></span>

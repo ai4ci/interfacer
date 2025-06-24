@@ -48,3 +48,9 @@ with new vignette to explain.
 of `.groupdata` parameter in dispatch function. 
 * `@ireturn` `roxygen2` tag for automatically picking up format from `ireturn(df,spec)`
 (n.b. this will hit the first detected value, not all of them).
+
+# interfacer 0.3.5
+
+* improved behaviour of `@iparam` when `idispatch` is used. 
+* `ireturn` validation disabled by default in deployment mode.
+* validation does not strip dataframe attributes any more.

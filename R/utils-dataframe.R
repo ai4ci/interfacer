@@ -100,3 +100,14 @@ switch_pipeline = function(.x, ...) {
   }
   return(.x)
 }
+
+# recover attributes from input except those that are usually part of dplyr.
+# dfin = iris %>% dplyr::group_by(Species) %>% magrittr::set_attr("test","hello")
+# tmp = .recover_attributes(iris, dfin)
+# attributes(tmp)
+.recover_attributes = function(output, input) {
+  tmp_out = attributes(output)
+  tmp_in = attributes(input)[!names(attributes(input)) %in% c("class","row.names","names","groups") ]
+  attributes(output) <- c(tmp_out,tmp_in[!names(tmp_in) %in% names(tmp_out)])
+  return(output)
+}

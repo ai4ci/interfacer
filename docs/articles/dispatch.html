@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">interfacer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,8 +106,9 @@ their columns and also their grouping. Consider the following
 <span>  .groups <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>We can create specific handlers for each type of data and decide
-which function to dispatch to at runtime based on the input
-dataframe.</p>
+which function to dispatch to at runtime based on the input dataframe.
+The handlers are specified in the format
+<code>function_name = iface constraint</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># The generic function</span></span>
@@ -158,16 +159,144 @@ behaviour:</p>
 <p>I’ve used this mechanism, for example, to configure how plots are
 produced depending on the input.</p>
 <div class="section level3">
+<h3 id="grouping-based-dispatch">Grouping based dispatch<a class="anchor" aria-label="anchor" href="#grouping-based-dispatch"></a>
+</h3>
+<p>It is often useful to have a function that can expects a specific
+grouping but can handle additional groups. One way of handling these is
+to use <code>purrr</code> and nest columns extensively. Nesting data in
+the unexpected groups and repeatedly applying the function you want. An
+alternative <code>dplyr</code> solution is to use a
+<code>group_modify</code>. <code>interfacer</code> leverages this second
+option to automatically determine a grouping necessary for a pipeline
+function from the stated grouping requirements and automatically handle
+them without additional coding in the package.</p>
+<p>For example if we have the following <code>iface</code> the input for
+a function must be grouped only by the <code>color</code> column:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span> <span class="co"># This specification requires that the dataframe is grouped only by the color</span></span>
+<span> <span class="co"># column</span></span>
+<span><span class="va">i_diamond_price</span> <span class="op">=</span> <span class="fu">interfacer</span><span class="fu">::</span><span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span></span>
+<span>   color <span class="op">=</span> <span class="fu">enum</span><span class="op">(</span><span class="va">`D`</span>,<span class="va">`E`</span>,<span class="va">`F`</span>,<span class="va">`G`</span>,<span class="va">`H`</span>,<span class="va">`I`</span>,<span class="va">`J`</span>, .ordered<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op">~</span> <span class="st">"the color column"</span>,</span>
+<span>   price <span class="op">=</span> <span class="va">integer</span> <span class="op">~</span> <span class="st">"the price column"</span>,</span>
+<span>   .groups <span class="op">=</span> <span class="op">~</span> <span class="va">color</span></span>
+<span> <span class="op">)</span></span></code></pre></div>
+<p>A package developer writing a pipeline function may use this fact to
+handle possible additional grouping by using a
+<code>igroup_process(df, ...)</code></p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># An example function which would be exported in a package</span></span>
+<span><span class="co"># This function expects a dataframe with a colour and price column, grouped</span></span>
+<span><span class="co"># by price.</span></span>
+<span><span class="va">mean_price_by_colour</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span> <span class="op">=</span> <span class="va">i_diamond_price</span>, <span class="va">extra_param</span> <span class="op">=</span> <span class="st">"."</span><span class="op">)</span> <span class="op">{</span></span>
+<span></span>
+<span>   <span class="co"># When called with a dataframe with extra groups `igroup_process` will</span></span>
+<span>   <span class="co"># regroup the dataframe according to the structure</span></span>
+<span>   <span class="co"># defined for `i_diamond_price` and apply the inner function to each group</span></span>
+<span>   <span class="co"># after first calling `ivalidate` on each group.</span></span>
+<span></span>
+<span>   <span class="fu"><a href="../reference/igroup_process.html">igroup_process</a></span><span class="op">(</span><span class="va">df</span>,</span>
+<span>     <span class="co"># the real work of this function is provided as an anonymous inner</span></span>
+<span>     <span class="co"># function (but can be any other function e.g. package private function</span></span>
+<span>     <span class="co"># but not a purrr style lambda). Ideally this function parameters are named the</span></span>
+<span>     <span class="co"># same as the enclosing function (here `mean_price_by_colour(df,extra_param)`), however</span></span>
+<span>     <span class="co"># there is some flexibility here. The special `.groupdata` parameter will</span></span>
+<span>     <span class="co"># be populated with the values of the unexpected grouping.</span></span>
+<span></span>
+<span>     <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">extra_param</span>, <span class="va">.groupdata</span><span class="op">)</span> <span class="op">{</span></span>
+<span>       <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="va">extra_param</span>, appendLF <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>       <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">.groupdata</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"N.B. zero length group data"</span><span class="op">)</span></span>
+<span>       <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">df</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>mean_price <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">price</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>     <span class="op">}</span></span>
+<span></span>
+<span>   <span class="op">)</span></span>
+<span> <span class="op">}</span></span></code></pre></div>
+<p>If we pass this to correctly grouped data conforming to
+<code>i_diamond_price</code> the inner function is executed once
+transparently, after the input has been validated:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># The correctly grouped dataframe. The `ex_mean` function calculates the mean</span></span>
+<span> <span class="co"># price for each `color` group.</span></span>
+<span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/diamonds.html" class="external-link">diamonds</a></span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>   <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">color</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>   <span class="fu">mean_price_by_colour</span><span class="op">(</span>extra_param <span class="op">=</span> <span class="st">"without additional groups... "</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>   <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; without additional groups... N.B. zero length group data</span></span>
+<span><span class="co">#&gt; Rows: 7</span></span>
+<span><span class="co">#&gt; Columns: 2</span></span>
+<span><span class="co">#&gt; $ color      <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> D<span style="color: #949494;">, </span>E<span style="color: #949494;">, </span>F<span style="color: #949494;">, </span>G<span style="color: #949494;">, </span>H<span style="color: #949494;">, </span>I<span style="color: #949494;">, </span>J</span></span>
+<span><span class="co">#&gt; $ mean_price <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 3169.954<span style="color: #949494;">, </span>3076.752<span style="color: #949494;">, </span>3724.886<span style="color: #949494;">, </span>3999.136<span style="color: #949494;">, </span>4486.669<span style="color: #949494;">, </span>5091.875<span style="color: #949494;">,</span>…</span></span></code></pre></div>
+<p>If an additionally grouped dataframe is provided by the user. The
+<code>mean_price_by_colour</code> function calculates the mean price for
+each <code>cut</code>,<code>clarity</code>, and <code>color</code>
+combination. Data validation happens once per group, which affects
+interpretation of uniqueness.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/diamonds.html" class="external-link">diamonds</a></span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">cut</span>, <span class="va">color</span>, <span class="va">clarity</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu">mean_price_by_colour</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ........................................</span></span>
+<span><span class="co">#&gt; Rows: 276</span></span>
+<span><span class="co">#&gt; Columns: 4</span></span>
+<span><span class="co">#&gt; Groups: cut, clarity [40]</span></span>
+<span><span class="co">#&gt; $ cut        <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">,</span>…</span></span>
+<span><span class="co">#&gt; $ clarity    <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>S…</span></span>
+<span><span class="co">#&gt; $ color      <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> D<span style="color: #949494;">, </span>E<span style="color: #949494;">, </span>F<span style="color: #949494;">, </span>G<span style="color: #949494;">, </span>H<span style="color: #949494;">, </span>I<span style="color: #949494;">, </span>J<span style="color: #949494;">, </span>D<span style="color: #949494;">, </span>E<span style="color: #949494;">, </span>F<span style="color: #949494;">, </span>G<span style="color: #949494;">, </span>H<span style="color: #949494;">, </span>I<span style="color: #949494;">, </span>J<span style="color: #949494;">, </span>D<span style="color: #949494;">, </span>E<span style="color: #949494;">, </span>F<span style="color: #949494;">, </span>G<span style="color: #949494;">, </span>H<span style="color: #949494;">, </span>I<span style="color: #949494;">,</span>…</span></span>
+<span><span class="co">#&gt; $ mean_price <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 7383.000<span style="color: #949494;">, </span>2095.222<span style="color: #949494;">, </span>2543.514<span style="color: #949494;">, </span>3187.472<span style="color: #949494;">, </span>4212.962<span style="color: #949494;">, </span>3501.000<span style="color: #949494;">,</span>…</span></span></code></pre></div>
+<p>The output of this is actually grouped by <code>cut</code> as the
+<code>color</code> column grouping is consumed by the nested function in
+<code>igroup_process</code>.</p>
+<p><code>igroup_process</code> can also be used recursively for a very
+succinct handling of additional grouping. In this case the function
+being developed calls <code>igroup_process</code> with itself as a
+parameter. If the input is correctly formatted the
+<code>igroup_process</code> exits, otherwise it splits the input into
+the correct format and processes each group individually:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span> <span class="va">recursive_example</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span> <span class="op">=</span> <span class="va">i_diamond_price</span><span class="op">)</span> <span class="op">{</span></span>
+<span></span>
+<span>   <span class="co"># call main function recursively if additional groups detected</span></span>
+<span>   <span class="fu"><a href="../reference/igroup_process.html">igroup_process</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">recursive_example</span><span class="op">)</span></span>
+<span>   </span>
+<span>   <span class="co"># code after this point is only executed if the grouping is correct</span></span>
+<span>   <span class="co"># it will be executed once per additional group.</span></span>
+<span>   <span class="co"># it must return a dataframe</span></span>
+<span></span>
+<span>   <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="st">"rows detected:"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>   </span>
+<span> <span class="op">}</span></span>
+<span></span>
+<span><span class="co"># this input is grouped as the specification is expecting</span></span>
+<span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/diamonds.html" class="external-link">diamonds</a></span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">color</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>    <span class="fu">recursive_example</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Rows: 1</span></span>
+<span><span class="co">#&gt; Columns: 1</span></span>
+<span><span class="co">#&gt; $ `rows detected:` <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 53940</span></span>
+<span> </span>
+<span><span class="co"># this input has additional grouping beyond the specification but is handled </span></span>
+<span><span class="co"># gracefully</span></span>
+<span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/diamonds.html" class="external-link">diamonds</a></span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">cut</span>,<span class="va">clarity</span>,<span class="va">color</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>    <span class="fu">recursive_example</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Rows: 40</span></span>
+<span><span class="co">#&gt; Columns: 3</span></span>
+<span><span class="co">#&gt; Groups: cut, clarity [40]</span></span>
+<span><span class="co">#&gt; $ cut              <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Good<span style="color: #949494;">,</span>…</span></span>
+<span><span class="co">#&gt; $ clarity          <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> I1<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI1<span style="color: #949494;">, </span>VS2<span style="color: #949494;">, </span>VS1<span style="color: #949494;">, </span>VVS2<span style="color: #949494;">, </span>VVS1<span style="color: #949494;">, </span>IF<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI1<span style="color: #949494;">,</span>…</span></span>
+<span><span class="co">#&gt; $ `rows detected:` <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 210<span style="color: #949494;">, </span>466<span style="color: #949494;">, </span>408<span style="color: #949494;">, </span>261<span style="color: #949494;">, </span>170<span style="color: #949494;">, </span>69<span style="color: #949494;">, </span>17<span style="color: #949494;">, </span>9<span style="color: #949494;">, </span>96<span style="color: #949494;">, </span>1081<span style="color: #949494;">, </span>1560<span style="color: #949494;">, </span>9…</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="recursive-dispatch">Recursive dispatch<a class="anchor" aria-label="anchor" href="#recursive-dispatch"></a>
 </h3>
-<p>The order of the rules is important. In general the more detailed
-specifications needing to be provided first, and the more generic
-specifications last. We can leverage this to create a recursive
-functional pattern of dataframe processing that allows multiple inputs
-to converge on a single output, this also demonstrates the use of
-<code><a href="../reference/itest.html">itest()</a></code> which simply checks an input conforms to an
-<code>iface</code> specification:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>The order of the rules provided to <code>idispatch</code> is
+important. In general the more detailed specifications needing to be
+provided first, and the more generic specifications last. We can
+leverage this to create a recursive functional pattern of dataframe
+processing that allows multiple inputs to converge on a single output,
+this also demonstrates the use of <code><a href="../reference/itest.html">itest()</a></code> which simply
+checks an input conforms to an <code>iface</code> specification:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># generic type 1 input</span></span>
 <span><span class="va">i_input_1</span> <span class="op">=</span> <span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span></span>
@@ -236,12 +365,16 @@ to converge on a single output, this also demonstrates the use of
 <span><span class="op">}</span></span></code></pre></div>
 <p>Processing an input of <code>type 1</code> results in one path
 through the data pipeline:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># tibble::tibble(x=c(10,30), n=c(NA,50)) %&gt;% itest(i_input_1)</span></span>
 <span><span class="fu">process</span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>x<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>,<span class="fl">30</span><span class="op">)</span>, n<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>,<span class="fl">50</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; process input 1</span></span>
+<span><span class="co">#&gt; interfacer: development mode active (local function).</span></span>
 <span><span class="co">#&gt; process interim</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; process final</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This message is displayed once every 8 hours.</span></span></span>
 <span><span class="co">#&gt; Rows: 2</span></span>
 <span><span class="co">#&gt; Columns: 8</span></span>
 <span><span class="co">#&gt; $ x      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 10<span style="color: #949494;">, </span>30</span></span>
@@ -254,7 +387,7 @@ through the data pipeline:</p>
 <span><span class="co">#&gt; $ label  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "10.0% [5.5% - 17.4%] (10/100)"<span style="color: #949494;">, </span>"60.0% [46.2% - 72.4%] (30/50)"</span></span></code></pre></div>
 <p>Processing an input of <code>type 2</code>, results in a different
 path through the data pipeline, but the same outcome:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># tibble::tibble(p=0.15,n=1000) %&gt;% itest(i_input_2)</span></span>
 <span><span class="fu">process</span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>p<span class="op">=</span><span class="fl">0.15</span>,n<span class="op">=</span><span class="fl">1000</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; process input 2</span></span>
@@ -274,130 +407,6 @@ path through the data pipeline, but the same outcome:</p>
 re-using column names,as data-type coercion could result in some column
 types being switched backwards and forwards, and other infinite loop
 problems.</p>
-</div>
-<div class="section level3">
-<h3 id="grouping-based-dispatch">Grouping based dispatch<a class="anchor" aria-label="anchor" href="#grouping-based-dispatch"></a>
-</h3>
-<p>It is often useful to have a function that can expects a specific
-grouping but can handle additional groups. One way of handling these is
-to use <code>purrr</code> and nest columns extensively. Nesting data in
-the unexpected groups and repeatedly applying the function you want. An
-alternative <code>dplyr</code> solution is to use a
-<code>group_modify</code>. <code>interfacer</code> leverages this second
-option to automatically determine a grouping necessary for a pipeline
-function from the stated grouping requirements and automatically handle
-them without additional coding in the package.</p>
-<p>For example if we have the following <code>iface</code> the input for
-a function must be grouped only by the <code>color</code> column:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span> <span class="co"># This specification requires that the dataframe is grouped only by the color</span></span>
-<span> <span class="co"># column</span></span>
-<span><span class="va">i_diamond_price</span> <span class="op">=</span> <span class="fu">interfacer</span><span class="fu">::</span><span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span></span>
-<span>   color <span class="op">=</span> <span class="fu">enum</span><span class="op">(</span><span class="va">`D`</span>,<span class="va">`E`</span>,<span class="va">`F`</span>,<span class="va">`G`</span>,<span class="va">`H`</span>,<span class="va">`I`</span>,<span class="va">`J`</span>, .ordered<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op">~</span> <span class="st">"the color column"</span>,</span>
-<span>   price <span class="op">=</span> <span class="va">integer</span> <span class="op">~</span> <span class="st">"the price column"</span>,</span>
-<span>   .groups <span class="op">=</span> <span class="op">~</span> <span class="va">color</span></span>
-<span> <span class="op">)</span></span></code></pre></div>
-<p>A package developer writing a pipeline function may use this fact to
-handle possible additional grouping by using a
-<code>igroup_process(df, ...)</code></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># An example function which would be exported in a package</span></span>
-<span><span class="co"># This function expects a dataframe with a colour and price column, grouped</span></span>
-<span><span class="co"># by price.</span></span>
-<span><span class="va">mean_price_by_colour</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span> <span class="op">=</span> <span class="va">i_diamond_price</span>, <span class="va">extra_param</span> <span class="op">=</span> <span class="st">"."</span><span class="op">)</span> <span class="op">{</span></span>
-<span></span>
-<span>   <span class="co"># When called with a dataframe with extra groups `igroup_process` will</span></span>
-<span>   <span class="co"># regroup the dataframe according to the structure</span></span>
-<span>   <span class="co"># defined for `i_diamond_price` and apply the inner function to each group</span></span>
-<span>   <span class="co"># after first calling `ivalidate` on each group.</span></span>
-<span></span>
-<span>   <span class="fu"><a href="../reference/igroup_process.html">igroup_process</a></span><span class="op">(</span><span class="va">df</span>,</span>
-<span>     <span class="co"># the real work of this function is provided as an anonymous inner</span></span>
-<span>     <span class="co"># function (but can be any other function e.g. package private function</span></span>
-<span>     <span class="co"># but not a purrr style lambda). Ideally this function parameters are named the</span></span>
-<span>     <span class="co"># same as the enclosing function (here `mean_price_by_colour(df,extra_param)`), however</span></span>
-<span>     <span class="co"># there is some flexibility here. The special `.groupdata` parameter will</span></span>
-<span>     <span class="co"># be populated with the values of the unexpected grouping.</span></span>
-<span></span>
-<span>     <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">extra_param</span>, <span class="va">.groupdata</span><span class="op">)</span> <span class="op">{</span></span>
-<span>       <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="va">extra_param</span>, appendLF <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span>       <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">.groupdata</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"N.B. zero length group data"</span><span class="op">)</span></span>
-<span>       <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">df</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>mean_price <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">price</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>     <span class="op">}</span></span>
-<span></span>
-<span>   <span class="op">)</span></span>
-<span> <span class="op">}</span></span></code></pre></div>
-<p>If we pass this to correctly grouped data conforming to
-<code>i_diamond_price</code> the inner function is executed once
-transparently, after the input has been validated:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># The correctly grouped dataframe. The `ex_mean` function calculates the mean</span></span>
-<span> <span class="co"># price for each `color` group.</span></span>
-<span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/diamonds.html" class="external-link">diamonds</a></span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>   <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">color</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>   <span class="fu">mean_price_by_colour</span><span class="op">(</span>extra_param <span class="op">=</span> <span class="st">"without additional groups... "</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>   <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; without additional groups... N.B. zero length group data</span></span>
-<span><span class="co">#&gt; Rows: 7</span></span>
-<span><span class="co">#&gt; Columns: 2</span></span>
-<span><span class="co">#&gt; $ color      <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> D<span style="color: #949494;">, </span>E<span style="color: #949494;">, </span>F<span style="color: #949494;">, </span>G<span style="color: #949494;">, </span>H<span style="color: #949494;">, </span>I<span style="color: #949494;">, </span>J</span></span>
-<span><span class="co">#&gt; $ mean_price <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 3169.954<span style="color: #949494;">, </span>3076.752<span style="color: #949494;">, </span>3724.886<span style="color: #949494;">, </span>3999.136<span style="color: #949494;">, </span>4486.669<span style="color: #949494;">, </span>5091.875<span style="color: #949494;">,</span>…</span></span></code></pre></div>
-<p>If an additionally grouped dataframe is provided by the user. The
-<code>mean_price_by_colour</code> function calculates the mean price for
-each <code>cut</code>,<code>clarity</code>, and <code>color</code>
-combination. Data validation happens once per group, which affects
-interpretation of uniqueness.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/diamonds.html" class="external-link">diamonds</a></span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">cut</span>, <span class="va">color</span>, <span class="va">clarity</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu">mean_price_by_colour</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ........................................</span></span>
-<span><span class="co">#&gt; Rows: 276</span></span>
-<span><span class="co">#&gt; Columns: 4</span></span>
-<span><span class="co">#&gt; Groups: cut, clarity [40]</span></span>
-<span><span class="co">#&gt; $ cut        <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ clarity    <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>S…</span></span>
-<span><span class="co">#&gt; $ color      <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> D<span style="color: #949494;">, </span>E<span style="color: #949494;">, </span>F<span style="color: #949494;">, </span>G<span style="color: #949494;">, </span>H<span style="color: #949494;">, </span>I<span style="color: #949494;">, </span>J<span style="color: #949494;">, </span>D<span style="color: #949494;">, </span>E<span style="color: #949494;">, </span>F<span style="color: #949494;">, </span>G<span style="color: #949494;">, </span>H<span style="color: #949494;">, </span>I<span style="color: #949494;">, </span>J<span style="color: #949494;">, </span>D<span style="color: #949494;">, </span>E<span style="color: #949494;">, </span>F<span style="color: #949494;">, </span>G<span style="color: #949494;">, </span>H<span style="color: #949494;">, </span>I<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ mean_price <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 7383.000<span style="color: #949494;">, </span>2095.222<span style="color: #949494;">, </span>2543.514<span style="color: #949494;">, </span>3187.472<span style="color: #949494;">, </span>4212.962<span style="color: #949494;">, </span>3501.000<span style="color: #949494;">,</span>…</span></span></code></pre></div>
-<p>The output of this is actually grouped by <code>cut</code> as the
-<code>color</code> column grouping is consumed by the nested function in
-<code>igroup_process</code>.</p>
-<p>The real power of <code>igroup_process</code> is if it is used
-recursively:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span> <span class="va">recursive_example</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span> <span class="op">=</span> <span class="va">i_diamond_price</span><span class="op">)</span> <span class="op">{</span></span>
-<span></span>
-<span>   <span class="co"># call main function recursively if additional groups detected</span></span>
-<span>   <span class="fu"><a href="../reference/igroup_process.html">igroup_process</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">recursive_example</span><span class="op">)</span></span>
-<span>   </span>
-<span>   <span class="co"># code after this point is only executed if the grouping is correct</span></span>
-<span>   <span class="co"># it will be executed once per additional group.</span></span>
-<span>   <span class="co"># it must return a dataframe</span></span>
-<span></span>
-<span>   <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="st">"rows detected:"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>   </span>
-<span> <span class="op">}</span></span>
-<span></span>
-<span><span class="co"># this input is grouped as the specification is expecting</span></span>
-<span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/diamonds.html" class="external-link">diamonds</a></span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">color</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>    <span class="fu">recursive_example</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rows: 1</span></span>
-<span><span class="co">#&gt; Columns: 1</span></span>
-<span><span class="co">#&gt; $ `rows detected:` <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 53940</span></span>
-<span> </span>
-<span><span class="co"># this input has additional grouping beyond the specification but is handled </span></span>
-<span><span class="co"># gracefully</span></span>
-<span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/diamonds.html" class="external-link">diamonds</a></span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">cut</span>,<span class="va">clarity</span>,<span class="va">color</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>    <span class="fu">recursive_example</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rows: 40</span></span>
-<span><span class="co">#&gt; Columns: 3</span></span>
-<span><span class="co">#&gt; Groups: cut, clarity [40]</span></span>
-<span><span class="co">#&gt; $ cut              <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Good<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ clarity          <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> I1<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI1<span style="color: #949494;">, </span>VS2<span style="color: #949494;">, </span>VS1<span style="color: #949494;">, </span>VVS2<span style="color: #949494;">, </span>VVS1<span style="color: #949494;">, </span>IF<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI1<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ `rows detected:` <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 210<span style="color: #949494;">, </span>466<span style="color: #949494;">, </span>408<span style="color: #949494;">, </span>261<span style="color: #949494;">, </span>170<span style="color: #949494;">, </span>69<span style="color: #949494;">, </span>17<span style="color: #949494;">, </span>9<span style="color: #949494;">, </span>96<span style="color: #949494;">, </span>1081<span style="color: #949494;">, </span>1560<span style="color: #949494;">, </span>9…</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

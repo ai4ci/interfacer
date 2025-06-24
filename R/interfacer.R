@@ -71,11 +71,30 @@ ivalidate = function(df = NULL, ..., .imap=imapper(), .prune=FALSE, .default = N
 #'
 #' This is intended to be used within a function to check the validity of a data
 #' frame being returned from a function against the provided `iface` specification.
+#' 
+#' As checks on output files can be unnecessary they are only run in certain
+#' circumstances:
+#' 
+#' `interfacer::ireturn()` checks run if:
+#' * an option is set: `options(interfacer.always_check=TRUE)`.
+#' * we are locally developing a package and running functions in smoke testing
+#'    e.g. with `devtools::load_all()`.
+#' * we are developing functions in the global environment.
+#' * we are running functions in a `testthat` or R CMD check.
+#' * we are running functions in a vignette during a R CMD check.
+#' * we are running functions in a R markdown file (e.g. vignette) interactively in RStudio.
+#' 
+#' checks are not run if:
+#' * package referencing `interfacer::ireturn` is installed from CRAN or r-universe
+#' * package referencing `interfacer::ireturn` is installed locally using 
+#'   `devtools::install`
+#' * vignette building directly using `knitr` (unless option is set in vignette).
+#' * vignette building using `pkgdown::build_site()`.
 #'
 #' @param df a dataframe - if missing then the first parameter of the calling
 #'   function is assumed to be a dataframe.
 #' @param iface the interface specification that `df` should conform to.
-#' @param .prune get rid of excess columns that are not in the spec.
+#' @param .prune get rid of excess columns that are not in the specification.
 #'
 #' @return a dataframe based on `df` with validity checks passed,
 #'   data-types coerced, and correct grouping applied to conform to `iface`
@@ -92,17 +111,22 @@ ivalidate = function(df = NULL, ..., .imap=imapper(), .prune=FALSE, .default = N
 #'   df = ivalidate(...)
 #'   tmp = df %>% dplyr::rename(col_out = col_in)
 #'   ireturn(tmp, output)
-#'   message("not executed")
+#'   stop("not executed as function has returned")
 #' }
 #' x(tibble::tibble(col_in = c(1,2,3)))
 #' output
 #' 
 ireturn = function(df, iface, .prune=FALSE) {
   
-  #TODO: bypass checks if the function is run in development
+  env = rlang::caller_env()
+  # bypass checks if the function is run in production
+  if (!.should_run_checks()) {
+    env[[".iface_output"]] = df
+    # trigger a return(.iface_output) from that environment.
+    rlang::eval_bare(quote(return(.iface_output)), env)
+  }
   
   spec = iface
-  env = rlang::caller_env()
   fn = rlang::caller_fn()
   fname = .get_fn_name(fn)
   out = df
@@ -164,10 +188,10 @@ ireturn = function(df, iface, .prune=FALSE) {
   if (.prune) {
     out = out %>% dplyr::select(tidyselect::all_of(unique(c(exp_cols,allowed_grps))))
   }
-  out = out %>% .coerce(spec, fname)
+  out = out %>% .coerce(spec, fname) %>% .recover_attributes(df)
   # return(out)
   env[[".iface_output"]] = out
-  # trigger a return(.output) from that environment.
+  # trigger a return(.iface_output) from that environment.
   rlang::eval_bare(quote(return(.iface_output)), env)
 }
   
@@ -285,7 +309,7 @@ iconvert = function(df, iface, .imap = interfacer::imapper(), .dname="<unknown>"
   
   # TODO: propagate .prune to nested dataframes...
   
-  out = out %>% .coerce(spec,.fname,.dname, .env)
+  out = out %>% .coerce(spec, .fname, .dname, .env) %>% .recover_attributes(df)
   return(out)
 }
 

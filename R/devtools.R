@@ -231,58 +231,84 @@ roxy_tag_rd.roxy_tag_iparam <- function(x, base_path, env) {
   
   if (rlang::is_missing(icall) || is.null(icall)) {
     # There is no formal parameter with a default value (or maybe it is given as NULL)
-    # we do not try and include it in the documentation
-    out = desc
+    # is there an idispatch call in the function?
+    list_icalls = .find_ireturn(body(fn), "idispatch", start=2, end=Inf)
+    if (!is.null(list_icalls)) {
+      # alternative inputs detected.
+      out = sprintf("%s - EITHER: a dataframe with %s\n\n",
+        desc,
+        paste0(
+          lapply( list_icalls, \(ic) {.icall_to_roxy(ic, fn)}),
+          collapse = "\n\nOR with "
+        )
+      )
+    } else {
+      # OK didn't find an iface spec in default value or an idispatch call.
+      # fail to including only description in the documentation. This is the 
+      # case if iparam is called on any random parameter
+      out = desc
+    }
   } else {
-  
-    # There is a formal parameter with a default value. We try and interpret it
-    spec = tryCatch(
-      # try evaluate the call as an iface.
-      eval(icall,envir = rlang::fn_env(fn)),
-      error = function(e) {
-        # just return the raw call
-        as.character(icall)
-      }
-    )
-    
-    if (is.iface(spec)) {
-      grps = attr(spec,"groups")
-      allow_other = attr(spec,"allow_other")
-      default = attr(spec,"default")
-      if (!is.null(default)) opt = "A default value is defined."
-      else  opt = ""
-      
-      if (allow_other) {
-        if (length(grps)==0) g = "Any grouping allowed."
-        else g = sprintf("Minimally grouped by: %s (and other groupings allowed).",paste0(grps,collapse = " + "))
-      } else {
-        if (length(grps)==0) g = "Ungrouped."
-        else g = sprintf("Must be grouped by: %s (exactly).",paste0(grps,collapse = " + "))
-      }
-      
-      out = sprintf("%s
+    # There is a formal parameter with a default value of the correct name. 
+    col_list_rd = .icall_to_roxy(icall, fn)
+    if ( !is.null(col_list_rd) ) {
+      # and it is an iface spec
+      out = sprintf("%s - a dataframe with %s\n", desc, col_list_rd )
+    } else {
+      # icall didn't evaluate to an iface (but was not null) it could be
+      # a regular default parameter?
+      out = sprintf("%s - default \\code{%s}", desc, as.character(icall))
+    }
+  }
+  names(out) = dname
+  roxygen2::rd_section("param", out)
+}
 
-A dataframe containing the following columns: 
+# take a call, evaluate it and format the iface description for roxygen
+.icall_to_roxy = function(icall, fn) {
+  # We try and interpret the icall
+  spec = tryCatch(
+    # try evaluate the call as an iface.
+    eval(icall,envir = rlang::fn_env(fn)),
+    error = function(e) {
+      # just return the raw call
+      as.character(icall)
+    }
+  )
+  
+  if (is.iface(spec)) {
+    grps = attr(spec,"groups")
+    allow_other = attr(spec,"allow_other")
+    default = attr(spec,"default")
+    if (!is.null(default)) opt = "A default value is defined."
+    else  opt = ""
+    
+    if (allow_other) {
+      if (length(grps)==0) g = "Any grouping allowed."
+      else g = sprintf("Minimally grouped by: %s (and other groupings allowed).",paste0(grps,collapse = " + "))
+    } else {
+      if (length(grps)==0) g = "Ungrouped."
+      else g = sprintf("Must be grouped by: %s (exactly).",paste0(grps,collapse = " + "))
+    }
+    
+    out = sprintf("columns:
 \\itemize{
 %s
 }
 
 %s
 
-%s
-",
-        desc,
-        paste0(glue::glue_data(spec, "\\item {name} ({type}) - {doc}"), collapse = "\n"),
-        g,
-        opt
-      ) %>% trimws()
-    } else {
-      # spec evaluated to something but not an iface spec. We'll 
-      out = sprintf("%s - (defaults to \\code{%s})", desc, deparse(spec))
-    }
+%s",
+      paste0(glue::glue_data(spec, "\\item {name} ({type}) - {doc}"), collapse = "\n"),
+      g,
+      opt
+    ) %>% trimws()
+  } else {
+    # spec evaluated to some default value but not an iface spec. We'll put it in here
+    # this might not always produce something sensible
+    out = NULL
   }
-  names(out) = dname
-  roxygen2::rd_section("param", out)
+  return(out)
 }
 
 ## @ireturn tags ----
@@ -317,12 +343,28 @@ roxy_tag_parse.roxy_tag_ireturn <- function(x) {
 #   return(tmp)
 # }
 
-.find_ireturn = function(call) {
+# name = function name
+# param = parameter number(s)
+# returns a name or expression with the parameter the function is called with
+# e.g.
+# x = function() {
+#   if (0==1) {
+#     afunction(1,x=2,y=variable,z=4)
+#   }
+# }
+# .find_ireturn(body(x), "afunction", start=2, end=Inf)
+.find_ireturn = function(call, name = "ireturn", start=2, end=start) {
   if (length(call) == 1) return(NULL)
   tmp = as.list(call)
-  if (tmp[[1]] == as.name("ireturn") || tmp[[1]] == as.name("interfacer::ireturn")) return(tmp[[3]])
+  if (tmp[[1]] == as.name(name) || tmp[[1]] == as.name(paste0("interfacer::",name))) {
+    if (start==end)
+      return(tmp[[start+1]])
+    else
+      tmp_end = min(c(end, length(tmp)-1))
+      return(lapply(start:tmp_end+1, \(i) tmp[[i]]))
+  }
   for (i in seq_along(tmp)) {
-    tmp2 = .find_ireturn(tmp[[i]])
+    tmp2 = .find_ireturn(tmp[[i]], name, start, end)
     if (!is.null(tmp2)) return(tmp2)
   }
   return(NULL)
@@ -424,9 +466,9 @@ A dataframe containing the following columns:
     g
       ) %>% trimws()
     } else {
-      # spec evaluated to something but not an iface spec. We'll 
-      out = sprintf("%s - (defaults to \\code{%s})", desc, deparse(spec))
-      
+      # spec evaluated to something but not an iface spec. We'll ignore this,
+      warning("In call to `interfacer::ireturn(df, spec)`, `spec` was not interpretable as an `iface`")
+      out = desc
     }
   }
   roxygen2::rd_section("value", out)

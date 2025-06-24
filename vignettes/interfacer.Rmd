@@ -34,14 +34,16 @@ an `roxygen2` tag for automating documentation of dataframe inputs. This is not
 dissimilar conceptually to the definition of a table in a relational database,
 or the specification of an XML schema.
 
-`interfacer` also provides capabilities that support checking dataframe function 
-outputs, dispatching to functions based on dataframe input structure, and 
-flexibly handling unexpectedly grouped data.
+`interfacer` also provides capabilities that support checking dataframe function
+outputs are consistent (typically during development), and documenting return
+dataframe formats. It is also capable of dispatching inputs to different
+functions based on dataframe input structure, and flexibly handling unexpected
+grouping in input data.
 
 # Defining an interface
 
-An `iface` specification defines the structure of acceptable dataframes. It is a list
-of column names, plus types and some documentation about the column.
+An `iface` specification defines the structure of acceptable dataframes. It is a
+list of column names, plus types and some documentation about the column.
 
 ```{r}
 i_test = iface(
@@ -66,7 +68,7 @@ constraints.
 ```{r}
 #' An example function
 #'
-#' @iparam mydata a dataframe input which should conform to `i_test`
+#' @iparam mydata description of a dataframe - format automatically documented
 #' @param another an example
 #' @param ... not used
 #'
@@ -174,13 +176,14 @@ are provided here:
 #' @param another an example   
 #' @param ... not used
 #'
-#' @return `r i_test`
+#' @ireturn a test output, format will be automatically documented
 #' @export
 example_fn2 = function(
     mydata = i_test_extn,
     ...
 ) {
   mydata = ivalidate(mydata, ..., .prune = TRUE)
+  print(paste0("extra column:", mydata$extra))
   mydata = mydata %>% dplyr::select(-extra)
   # check the return value conforms to a new specification
   ireturn(mydata, i_test)
@@ -279,6 +282,11 @@ but essentially it inserts the following block into the documentation when
 ```{r}
 cat(idocument(example_fn2))
 ```
+
+There is a matching `@ireturn` tag which can be used instead of `@return` and 
+this inspects the function looking for an `interfacer::ireturn(output, spec)` 
+call and uses the specification to document the structure of the value returned
+by the function.
 
 # Type coercion
 

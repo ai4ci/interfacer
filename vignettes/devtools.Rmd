@@ -52,13 +52,14 @@ a question of removing the relevant comment in `R/interfaces.R`
 When using `usethis::use_data` to embed data in a package there is inevitably a
 reminder to document your data. When you are embedding a dataframe `interfacer`
 can inspect your dataframe and generate a template data documentation into
-`R/data.R` at the same this as embedding the data.
+`R/data.R` at the same this as embedding the data to ease this pain.
 
 This is triggered with a call to, for example, `interfacer::use_dataframe(mtcars)`
 which will create an entry in `R/data.R` for your dataframe documentation.
 
 This function uses the `interfacer` framework to generate the documentation but 
-does not need it afterwards.
+does not need it afterwards, so you can use this without putting interfacer in
+your description file, if that is all you want to use the package for.
 
 # `roxygen2` documentation
 
@@ -85,7 +86,7 @@ The `@iparam` tag picks the `iface` specification from the current function and
 parameter. A more flexible alternative is provided by `idocument()` which allows
 you to specify the function and parameter you wish to document. This is useful 
 if documenting a generic function that may dispatch to multiple functions based
-on the dataframe structures. 
+on the dataframe structures. In the future we will try and automate this.
 
 ```{r eval=FALSE}
 
@@ -93,7 +94,7 @@ on the dataframe structures.
 i_type1 = interfacer::iface(col1 = integer ~ "An integer value")
 i_type2 = interfacer::iface(col1 = date ~ "A date value")
 
-#' A mulitple dispatch function
+#' A multiple dispatch function
 #' 
 #' @param df An input dataframe conforming to one of:
 #' `r interfacer::idocument(test_function.type1, df)`
@@ -118,12 +119,13 @@ test_function.type1 = function(df = i_type2) {
 
 ```
 
+Return values using the `roxygen2` `@ireturn` tag that picks up format
+definitions from the (first) call to `ireturn(value, spec)` in the function body. 
+This is then used to describe the format of the output dataframe.
+
 If, as in the previous example, the `iface` definitions are defined as package
 local variables it is also possible to refer directly to these variables
-in the documentation where they will be expanded to their definition. This can 
-be combined to document return values using the `roxygen2` `@ireturn` tag that 
-picks up format definitions from the call to `ireturn(value, spec)` in the 
-function body.
+in the documentation where they will be expanded to their definition. 
 
 ```{r eval=FALSE}
 
@@ -134,7 +136,7 @@ i_return_type = interfacer::iface(output = date ~ "A date value")
 #' An example function
 #' 
 #' The parameter and return values will be expanded to describe the
-#' input and output formats defined above.
+#' input and output dataframe formats defined above.
 #' 
 #' @iparam df An input dataframe
 #' @ireturn A description of the output dataframe

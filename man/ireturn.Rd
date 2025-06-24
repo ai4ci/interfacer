@@ -12,7 +12,7 @@ function is assumed to be a dataframe.}
 
 \item{iface}{the interface specification that \code{df} should conform to.}
 
-\item{.prune}{get rid of excess columns that are not in the spec.}
+\item{.prune}{get rid of excess columns that are not in the specification.}
 }
 \value{
 a dataframe based on \code{df} with validity checks passed,
@@ -21,6 +21,30 @@ data-types coerced, and correct grouping applied to conform to \code{iface}
 \description{
 This is intended to be used within a function to check the validity of a data
 frame being returned from a function against the provided \code{iface} specification.
+}
+\details{
+As checks on output files can be unnecessary they are only run in certain
+circumstances:
+
+\code{interfacer::ireturn()} checks run if:
+\itemize{
+\item an option is set: \code{options(interfacer.always_check=TRUE)}.
+\item we are locally developing a package and running functions in smoke testing
+e.g. with \code{devtools::load_all()}.
+\item we are developing functions in the global environment.
+\item we are running functions in a \code{testthat} or R CMD check.
+\item we are running functions in a vignette during a R CMD check.
+\item we are running functions in a R markdown file (e.g. vignette) interactively in RStudio.
+}
+
+checks are not run if:
+\itemize{
+\item package referencing \code{interfacer::ireturn} is installed from CRAN or r-universe
+\item package referencing \code{interfacer::ireturn} is installed locally using
+\code{devtools::install}
+\item vignette building directly using \code{knitr} (unless option is set in vignette).
+\item vignette building using \code{pkgdown::build_site()}.
+}
 }
 \examples{
 
@@ -31,7 +55,7 @@ x = function(df = input, ...) {
   df = ivalidate(...)
   tmp = df \%>\% dplyr::rename(col_out = col_in)
   ireturn(tmp, output)
-  message("not executed")
+  stop("not executed as function has returned")
 }
 x(tibble::tibble(col_in = c(1,2,3)))
 output
