@@ -13,6 +13,8 @@ please see https://github.com/ai4ci/interfacer/actions/workflows/R-CMD-check.yam
 
 This release contains a backward compatible set of usability enhancements 
 including a new `roxygen2` tab for documenting structure of return values.
+And updates to the existing documentation `roclets` when multiple dispatch
+is used in a function.
 
 * There are no reverse dependencies.
 * There are no references describing the methods in this package.
