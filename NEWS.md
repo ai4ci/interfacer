@@ -54,3 +54,9 @@ of `.groupdata` parameter in dispatch function.
 * improved behaviour of `@iparam` when `idispatch` is used. 
 * `ireturn` validation disabled by default in deployment mode.
 * validation does not strip dataframe attributes any more.
+
+# interfacer 0.3.5
+
+* speed-up via better function matching
+* documentation of `@iparam` grouping accounts for `igroup_process` calls in 
+function body

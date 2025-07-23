@@ -43,8 +43,8 @@ development to interactive test a \code{iface} spec. \code{iconvert} is an inter
 version of \code{\link[=ivalidate]{ivalidate()}}.
 }
 \examples{
-i_diamonds = iface( 
-  color = enum(D,E,F,G,H,I,J,extra) ~ "the colour", 
+i_diamonds = iface(
+  color = enum(D,E,F,G,H,I,J,extra) ~ "the colour",
   price = integer ~ "the price"
 )
 

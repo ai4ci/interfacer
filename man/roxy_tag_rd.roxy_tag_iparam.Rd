@@ -28,9 +28,9 @@ the function is expecting.
 # An example function definition:
 fn_definition <- "
 #' This is a title
-#' 
+#'
 #' This is the description.
-#' 
+#'
 #' @md
 #' @iparam df the input
 #' @export
@@ -44,7 +44,7 @@ f <- function(df = interfacer::iface(
 
 # For this example we manually parse the function specification in `fn_definition`
 # creating a .Rd block - normally this is done by `roxygen2` which then
-# writes this to an .Rd file. This function is not intended to be used 
+# writes this to an .Rd file. This function is not intended to be used
 # outside of a call to `devtools::document`.
 
 tmp = roxygen2::parse_text(fn_definition)

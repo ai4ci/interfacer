@@ -26,19 +26,19 @@ its given input is conformant to the interface.
 }
 \examples{
 if (rlang::is_installed("ggplot2")) {
-  i_diamonds = iface( 
-    color = enum(D,E,F,G,H,I,J,extra) ~ "the colour", 
+  i_diamonds = iface(
+    color = enum(D,E,F,G,H,I,J,extra) ~ "the colour",
     price = integer ~ "the price"
   )
-  
+
   # Ad hoc testing
   itest(ggplot2::diamonds, i_diamonds)
-  
+
   # Use within function:
   x = function(df = i_diamonds) {
     if(itest()) message("PASS!")
   }
-  
+
   x(ggplot2::diamonds)
 }
 }

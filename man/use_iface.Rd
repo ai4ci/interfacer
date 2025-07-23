@@ -45,7 +45,7 @@ the test data.
 if (interactive()) {
   # This is not run as it is designed for interactive use only and will
   # write to the userspace after checking that is what the user wants.
-  use_iface(iris) 
+  use_iface(iris)
 }
 }
 \concept{document}

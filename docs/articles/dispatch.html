@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">interfacer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -391,6 +391,7 @@ path through the data pipeline, but the same outcome:</p>
 <code class="sourceCode R"><span><span class="co"># tibble::tibble(p=0.15,n=1000) %&gt;% itest(i_input_2)</span></span>
 <span><span class="fu">process</span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>p<span class="op">=</span><span class="fl">0.15</span>,n<span class="op">=</span><span class="fl">1000</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; process input 2</span></span>
+<span><span class="co">#&gt; Warning: ireturn validation did not pass without changing the value.</span></span>
 <span><span class="co">#&gt; process interim</span></span>
 <span><span class="co">#&gt; process final</span></span>
 <span><span class="co">#&gt; Rows: 1</span></span>

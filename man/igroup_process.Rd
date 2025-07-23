@@ -53,65 +53,67 @@ i_diamond_price = interfacer::iface(
 # This function expects a dataframe with a colour and price column, grouped
 # by price.
 mean_price_by_colour = function(df = i_diamond_price, extra_param = ".") {
-  
-  # When called with a dataframe with extra groups `igroup_process` will 
-  # regroup the dataframe according to the structure 
+
+  # When called with a dataframe with extra groups `igroup_process` will
+  # regroup the dataframe according to the structure
   # defined for `i_diamond_price` and apply the inner function to each group
   # after first calling `ivalidate` on each group.
-  
-  igroup_process(df, 
-    
+
+  igroup_process(df,
+
     # the real work of this function is provided as an anonymous inner
     # function (but can be any other function e.g. package private function
     # but not a purrr style lambda). Ideally this function parameters are named the
-    # same as the enclosing function (here `ex_mean(df,extra_param)`), however 
+    # same as the enclosing function (here `ex_mean(df,extra_param)`), however
     # there is some flexibility here. The special `.groupdata` parameter will
     # be populated with the values of the unexpected grouping.
-    
+
     function(df, extra_param, .groupdata) {
       message(extra_param, appendLF = FALSE)
-      if (nrow(.groupdata) == 0) message("zero length group data") 
+      if (nrow(.groupdata) == 0) message("zero length group data")
       return(df \%>\% dplyr::summarise(mean_price = mean(price)))
     }
-    
+
   )
 }
 
 # The correctly grouped dataframe. The `ex_mean` function calculates the mean
 # price for each `color` group.
-ggplot2::diamonds \%>\% 
-  dplyr::group_by(color) \%>\% 
-  mean_price_by_colour(extra_param = "without additional groups...") \%>\% 
+ggplot2::diamonds \%>\%
+  dplyr::group_by(color) \%>\%
+  mean_price_by_colour(extra_param = "without additional groups...") \%>\%
   dplyr::glimpse()
-  
-# If an additionally grouped dataframe is provided by the user. The `ex_mean` 
-# function calculates the mean price for each `cut`,`clarity`, and `color` 
+
+# If an additionally grouped dataframe is provided by the user. The `ex_mean`
+# function calculates the mean price for each `cut`,`clarity`, and `color`
 # combination.
 
-ggplot2::diamonds \%>\% 
-  dplyr::group_by(cut, color, clarity) \%>\% 
-  mean_price_by_colour() \%>\% 
+ggplot2::diamonds \%>\%
+  dplyr::group_by(cut, color, clarity) \%>\%
+  mean_price_by_colour() \%>\%
   dplyr::glimpse()
-  
+
 # The output of this is actually grouped by cut then clarity as
 # color is consumed by the `igroup_dispatch`.
 
-# This example is somewhat contorted. The real power of `igroup_process` is 
+# This example is somewhat contorted. The real power of `igroup_process` is
 # if it is used recursively:
 
 recursive_example = function(df = i_diamond_price) {
-  
+
   # call main function recursively if additional groups detected
   igroup_process(df, recursive_example)
-  
+  # N.B. this also works if the second argument is omitted e.g.:
+  # igroup_process(df)
+
   # otherwise proceed with function as normal
   return(tibble::tibble("rows detected:"=nrow(df)))
 }
 
-ggplot2::diamonds \%>\% dplyr::group_by(color) \%>\% 
-   recursive_example() \%>\% 
+ggplot2::diamonds \%>\% dplyr::group_by(color) \%>\%
+   recursive_example() \%>\%
    dplyr::glimpse()
-ggplot2::diamonds \%>\% dplyr::group_by(cut,clarity,color) \%>\% 
+ggplot2::diamonds \%>\% dplyr::group_by(cut,clarity,color) \%>\%
    recursive_example() \%>\%
    dplyr::glimpse()
 }

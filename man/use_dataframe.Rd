@@ -38,7 +38,7 @@ depend on it.
 if (interactive()) {
   # This is not run as it is designed for interactive use only and will
   # write to the userspace after checking that is what the user wants.
-  use_dataframe(iris) 
+  use_dataframe(iris)
 }
 }
 \concept{document}
