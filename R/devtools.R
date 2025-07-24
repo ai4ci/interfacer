@@ -434,6 +434,9 @@ roxy_tag_parse.roxy_tag_ireturn <- function(x) {
     return(NULL)
   }
   tmp = as.list(call)
+  if (length(tmp) == 0) {
+    return(NULL)
+  }
   if (
     tmp[[1]] == as.name(name) ||
       tmp[[1]] == as.name(paste0("interfacer::", name))
