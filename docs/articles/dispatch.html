@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">interfacer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -158,9 +158,13 @@ behaviour:</p>
 <span><span class="co">#&gt; [1] "id"   "test"</span></span></code></pre></div>
 <p>I’ve used this mechanism, for example, to configure how plots are
 produced depending on the input.</p>
-<div class="section level3">
-<h3 id="grouping-based-dispatch">Grouping based dispatch<a class="anchor" aria-label="anchor" href="#grouping-based-dispatch"></a>
-</h3>
+<p>The order of the rules provided to <code>idispatch</code> is
+important. In general the more detailed specifications needing to be
+provided first, and the more generic specifications last.</p>
+</div>
+<div class="section level2">
+<h2 id="grouping-based-dispatch">Grouping based dispatch<a class="anchor" aria-label="anchor" href="#grouping-based-dispatch"></a>
+</h2>
 <p>It is often useful to have a function that can expects a specific
 grouping but can handle additional groups. One way of handling these is
 to use <code>purrr</code> and nest columns extensively. Nesting data in
@@ -255,18 +259,18 @@ the correct format and processes each group individually:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span> <span class="va">recursive_example</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span> <span class="op">=</span> <span class="va">i_diamond_price</span><span class="op">)</span> <span class="op">{</span></span>
 <span></span>
-<span>   <span class="co"># call main function recursively if additional groups detected</span></span>
-<span>   <span class="fu"><a href="../reference/igroup_process.html">igroup_process</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">recursive_example</span><span class="op">)</span></span>
+<span>   <span class="co"># call enclosing function recursively if additional groups detected</span></span>
+<span>   <span class="fu"><a href="../reference/igroup_process.html">igroup_process</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span>   </span>
 <span>   <span class="co"># code after this point is only executed if the grouping is correct</span></span>
 <span>   <span class="co"># it will be executed once per additional group.</span></span>
 <span>   <span class="co"># it must return a dataframe</span></span>
-<span></span>
 <span>   <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="st">"rows detected:"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span>   </span>
 <span> <span class="op">}</span></span>
 <span></span>
 <span><span class="co"># this input is grouped as the specification is expecting</span></span>
+<span><span class="co"># the i_group_process does nothing.</span></span>
 <span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/diamonds.html" class="external-link">diamonds</a></span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">color</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>    <span class="fu">recursive_example</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -285,130 +289,6 @@ the correct format and processes each group individually:</p>
 <span><span class="co">#&gt; $ cut              <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Fair<span style="color: #949494;">, </span>Good<span style="color: #949494;">,</span>…</span></span>
 <span><span class="co">#&gt; $ clarity          <span style="color: #949494; font-style: italic;">&lt;ord&gt;</span> I1<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI1<span style="color: #949494;">, </span>VS2<span style="color: #949494;">, </span>VS1<span style="color: #949494;">, </span>VVS2<span style="color: #949494;">, </span>VVS1<span style="color: #949494;">, </span>IF<span style="color: #949494;">, </span>I1<span style="color: #949494;">, </span>SI2<span style="color: #949494;">, </span>SI1<span style="color: #949494;">,</span>…</span></span>
 <span><span class="co">#&gt; $ `rows detected:` <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 210<span style="color: #949494;">, </span>466<span style="color: #949494;">, </span>408<span style="color: #949494;">, </span>261<span style="color: #949494;">, </span>170<span style="color: #949494;">, </span>69<span style="color: #949494;">, </span>17<span style="color: #949494;">, </span>9<span style="color: #949494;">, </span>96<span style="color: #949494;">, </span>1081<span style="color: #949494;">, </span>1560<span style="color: #949494;">, </span>9…</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="recursive-dispatch">Recursive dispatch<a class="anchor" aria-label="anchor" href="#recursive-dispatch"></a>
-</h3>
-<p>The order of the rules provided to <code>idispatch</code> is
-important. In general the more detailed specifications needing to be
-provided first, and the more generic specifications last. We can
-leverage this to create a recursive functional pattern of dataframe
-processing that allows multiple inputs to converge on a single output,
-this also demonstrates the use of <code><a href="../reference/itest.html">itest()</a></code> which simply
-checks an input conforms to an <code>iface</code> specification:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># generic type 1 input</span></span>
-<span><span class="va">i_input_1</span> <span class="op">=</span> <span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span></span>
-<span>  x <span class="op">=</span> <span class="va">integer</span> <span class="op">~</span> <span class="st">"the positives"</span>,</span>
-<span>  n <span class="op">=</span> <span class="fu">default</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span> <span class="op">+</span> <span class="va">integer</span> <span class="op">~</span> <span class="st">"the total"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># generic type 2 input</span></span>
-<span><span class="va">i_input_2</span> <span class="op">=</span> <span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span></span>
-<span>  p <span class="op">=</span> <span class="va">proportion</span> <span class="op">~</span> <span class="st">"the proportion"</span>,</span>
-<span>  n <span class="op">=</span> <span class="fu">default</span><span class="op">(</span><span class="fl">100</span><span class="op">)</span> <span class="op">+</span> <span class="va">integer</span> <span class="op">~</span> <span class="st">"the total"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># more detailed combined type 1 and 2 input</span></span>
-<span><span class="va">i_interim</span> <span class="op">=</span> <span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span></span>
-<span>  <span class="va">i_input_1</span>,</span>
-<span>  <span class="va">i_input_2</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># most detailed input format</span></span>
-<span><span class="va">i_final</span> <span class="op">=</span> <span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span></span>
-<span>  <span class="va">i_interim</span>,</span>
-<span>  lower <span class="op">=</span> <span class="va">double</span> <span class="op">~</span> <span class="st">"wilson lower CI"</span>,</span>
-<span>  upper <span class="op">=</span> <span class="va">double</span> <span class="op">~</span> <span class="st">"wilson lower CI"</span>,</span>
-<span>  mean <span class="op">=</span> <span class="va">double</span> <span class="op">~</span> <span class="st">"wilson mean"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># final target output format</span></span>
-<span><span class="va">i_target</span> <span class="op">=</span> <span class="fu"><a href="../reference/iface.html">iface</a></span><span class="op">(</span></span>
-<span>  <span class="va">i_final</span>,</span>
-<span>  label <span class="op">=</span> <span class="va">character</span> <span class="op">~</span> <span class="st">"a printable label"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># processes input of type 1 and </span></span>
-<span><span class="va">process.input_1</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span> <span class="op">=</span> <span class="va">i_input_1</span>,<span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"process input 1"</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="../reference/ireturn.html">ireturn</a></span><span class="op">(</span><span class="va">x</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>p <span class="op">=</span> <span class="va">x</span><span class="op">/</span><span class="va">n</span><span class="op">)</span>, iface <span class="op">=</span> <span class="va">i_interim</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">process.input_2</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span> <span class="op">=</span> <span class="va">i_input_2</span>,<span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"process input 2"</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="../reference/ireturn.html">ireturn</a></span><span class="op">(</span><span class="va">x</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">p</span><span class="op">*</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>, iface <span class="op">=</span> <span class="va">i_interim</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">process.interim</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"process interim"</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="../reference/ireturn.html">ireturn</a></span><span class="op">(</span><span class="va">x</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="fu">binom</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/binom/man/binom.confint.html" class="external-link">binom.wilson</a></span><span class="op">(</span><span class="va">x</span>,<span class="va">n</span><span class="op">)</span><span class="op">)</span>, iface <span class="op">=</span> <span class="va">i_final</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">process.final</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"process final"</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="../reference/ireturn.html">ireturn</a></span><span class="op">(</span><span class="va">x</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%1.1f%% [%1.1f%% - %1.1f%%] (%d/%d)"</span>, </span>
-<span>    <span class="va">mean</span><span class="op">*</span><span class="fl">100</span>, <span class="va">lower</span><span class="op">*</span><span class="fl">100</span>, <span class="va">upper</span><span class="op">*</span><span class="fl">100</span>, <span class="va">x</span>, <span class="va">n</span><span class="op">)</span><span class="op">)</span>, iface <span class="op">=</span> <span class="va">i_target</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">process</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>,<span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># this test must be at the front to prevent infinite recursion</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="../reference/itest.html">itest</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">i_target</span><span class="op">)</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
-<span>  <span class="va">out</span> <span class="op">=</span> <span class="fu"><a href="../reference/idispatch.html">idispatch</a></span><span class="op">(</span><span class="va">x</span>,</span>
-<span>    process.final <span class="op">=</span> <span class="va">i_final</span>,</span>
-<span>    process.interim <span class="op">=</span> <span class="va">i_interim</span>,</span>
-<span>    process.input_2 <span class="op">=</span> <span class="va">i_input_2</span>,</span>
-<span>    process.input_1 <span class="op">=</span> <span class="va">i_input_1</span></span>
-<span>  <span class="op">)</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu">process</span><span class="op">(</span><span class="va">out</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p>Processing an input of <code>type 1</code> results in one path
-through the data pipeline:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># tibble::tibble(x=c(10,30), n=c(NA,50)) %&gt;% itest(i_input_1)</span></span>
-<span><span class="fu">process</span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>x<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>,<span class="fl">30</span><span class="op">)</span>, n<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>,<span class="fl">50</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; process input 1</span></span>
-<span><span class="co">#&gt; interfacer: development mode active (local function).</span></span>
-<span><span class="co">#&gt; process interim</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; process final</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">This message is displayed once every 8 hours.</span></span></span>
-<span><span class="co">#&gt; Rows: 2</span></span>
-<span><span class="co">#&gt; Columns: 8</span></span>
-<span><span class="co">#&gt; $ x      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 10<span style="color: #949494;">, </span>30</span></span>
-<span><span class="co">#&gt; $ n      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 100<span style="color: #949494;">, </span>50</span></span>
-<span><span class="co">#&gt; $ p      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.1<span style="color: #949494;">, </span>0.6</span></span>
-<span><span class="co">#&gt; $ method <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "wilson"<span style="color: #949494;">, </span>"wilson"</span></span>
-<span><span class="co">#&gt; $ mean   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.1<span style="color: #949494;">, </span>0.6</span></span>
-<span><span class="co">#&gt; $ lower  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.05522914<span style="color: #949494;">, </span>0.46181438</span></span>
-<span><span class="co">#&gt; $ upper  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.1743657<span style="color: #949494;">, </span>0.7239161</span></span>
-<span><span class="co">#&gt; $ label  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "10.0% [5.5% - 17.4%] (10/100)"<span style="color: #949494;">, </span>"60.0% [46.2% - 72.4%] (30/50)"</span></span></code></pre></div>
-<p>Processing an input of <code>type 2</code>, results in a different
-path through the data pipeline, but the same outcome:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># tibble::tibble(p=0.15,n=1000) %&gt;% itest(i_input_2)</span></span>
-<span><span class="fu">process</span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>p<span class="op">=</span><span class="fl">0.15</span>,n<span class="op">=</span><span class="fl">1000</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; process input 2</span></span>
-<span><span class="co">#&gt; Warning: ireturn validation did not pass without changing the value.</span></span>
-<span><span class="co">#&gt; process interim</span></span>
-<span><span class="co">#&gt; process final</span></span>
-<span><span class="co">#&gt; Rows: 1</span></span>
-<span><span class="co">#&gt; Columns: 8</span></span>
-<span><span class="co">#&gt; $ p      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.15</span></span>
-<span><span class="co">#&gt; $ n      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 1000</span></span>
-<span><span class="co">#&gt; $ x      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 150</span></span>
-<span><span class="co">#&gt; $ method <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "wilson"</span></span>
-<span><span class="co">#&gt; $ mean   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.15</span></span>
-<span><span class="co">#&gt; $ lower  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.1292101</span></span>
-<span><span class="co">#&gt; $ upper  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.1734687</span></span>
-<span><span class="co">#&gt; $ label  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "15.0% [12.9% - 17.3%] (150/1000)"</span></span></code></pre></div>
-<p>Care must be taken though in this pattern, particularly if you are
-re-using column names,as data-type coercion could result in some column
-types being switched backwards and forwards, and other infinite loop
-problems.</p>
-</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

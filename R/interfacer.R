@@ -58,6 +58,17 @@ ivalidate = function(
   # TODO: warn if spec names collides with formals.
   spec = .get_spec(fn, dname)
 
+  if (rlang::is_missing(df)) {
+    stop(
+      "Missing parameter `",
+      dname,
+      "` in function `",
+      fname,
+      "` (and there is no `iface` specification defined for it).",
+      call. = FALSE
+    )
+  }
+
   if (is.iface(df)) {
     # We are validating something that should be a data frame but it is in fact
     # a iface spec. This means that no value has been supplied by the user and

@@ -55,8 +55,13 @@ of `.groupdata` parameter in dispatch function.
 * `ireturn` validation disabled by default in deployment mode.
 * validation does not strip dataframe attributes any more.
 
-# interfacer 0.3.5
+# interfacer 0.3.6
 
 * speed-up via better function matching
 * documentation of `@iparam` grouping accounts for `igroup_process` calls in 
 function body
+
+# interfacer 0.3.7
+
+* experimental support for group processing by an externally supplied interface 
+spec

@@ -104,7 +104,11 @@ tmp2 %>% disp_example()
 I've used this mechanism, for example, to configure how plots are produced
 depending on the input.
 
-## Grouping based dispatch
+The order of the rules provided to `idispatch` is important. In general the more
+detailed specifications needing to be provided first, and the more generic
+specifications last. 
+
+# Grouping based dispatch
 
 It is often useful to have a function that can expects a specific grouping but
 can handle additional groups. One way of handling these is to use `purrr` and
@@ -196,18 +200,18 @@ and processes each group individually:
 ```{r}
  recursive_example = function(df = i_diamond_price) {
 
-   # call main function recursively if additional groups detected
-   igroup_process(df, recursive_example)
+   # call enclosing function recursively if additional groups detected
+   igroup_process(df)
    
    # code after this point is only executed if the grouping is correct
    # it will be executed once per additional group.
    # it must return a dataframe
-
    return(tibble::tibble("rows detected:"=nrow(df)))
    
  }
 
 # this input is grouped as the specification is expecting
+# the i_group_process does nothing.
  ggplot2::diamonds %>% dplyr::group_by(color) %>%
     recursive_example() %>%
     dplyr::glimpse()
@@ -218,103 +222,3 @@ and processes each group individually:
     recursive_example() %>%
     dplyr::glimpse()
 ```
-
-
-## Recursive dispatch
-
-The order of the rules provided to `idispatch` is important. In general the more
-detailed specifications needing to be provided first, and the more generic
-specifications last. We can leverage this to create a recursive functional
-pattern of dataframe processing that allows multiple inputs to converge on a
-single output, this also demonstrates the use of `itest()` which simply checks
-an input conforms to an `iface` specification:
-
-```{r}
-
-# generic type 1 input
-i_input_1 = iface(
-  x = integer ~ "the positives",
-  n = default(100) + integer ~ "the total"
-)
-
-# generic type 2 input
-i_input_2 = iface(
-  p = proportion ~ "the proportion",
-  n = default(100) + integer ~ "the total"
-)
-
-# more detailed combined type 1 and 2 input
-i_interim = iface(
-  i_input_1,
-  i_input_2
-)
-
-# most detailed input format
-i_final = iface(
-  i_interim,
-  lower = double ~ "wilson lower CI",
-  upper = double ~ "wilson lower CI",
-  mean = double ~ "wilson mean"
-)
-
-# final target output format
-i_target = iface(
-  i_final,
-  label = character ~ "a printable label"
-)
-
-# processes input of type 1 and 
-process.input_1 = function(x = i_input_1,...) {
-  message("process input 1")
-  ireturn(x %>% dplyr::mutate(p = x/n), iface = i_interim)
-}
-
-process.input_2 = function(x = i_input_2,...) {
-  message("process input 2")
-  ireturn(x %>% dplyr::mutate(x = floor(p*n)), iface = i_interim)
-}
-
-process.interim = function(x) {
-  message("process interim")
-  ireturn(x %>% dplyr::mutate(binom::binom.wilson(x,n)), iface = i_final)
-}
-
-process.final = function(x) {
-  message("process final")
-  ireturn(x %>% dplyr::mutate(label = sprintf("%1.1f%% [%1.1f%% - %1.1f%%] (%d/%d)", 
-    mean*100, lower*100, upper*100, x, n)), iface = i_target)
-}
-
-process = function(x,...) {
-  # this test must be at the front to prevent infinite recursion
-  if (itest(x, i_target)) return(x)
-  out = idispatch(x,
-    process.final = i_final,
-    process.interim = i_interim,
-    process.input_2 = i_input_2,
-    process.input_1 = i_input_1
-  )
-  return(process(out))
-}
-
-```
-
-
-Processing an input of `type 1` results in one path through the data pipeline:
-
-```{r}
-# tibble::tibble(x=c(10,30), n=c(NA,50)) %>% itest(i_input_1)
-process(tibble::tibble(x=c(10,30), n=c(NA,50))) %>% dplyr::glimpse()
-```
-
-Processing an input of `type 2`, results in a different path through the data
-pipeline, but the same outcome:
-
-```{r}
-# tibble::tibble(p=0.15,n=1000) %>% itest(i_input_2)
-process(tibble::tibble(p=0.15,n=1000)) %>% dplyr::glimpse()
-```
-
-Care must be taken though in this pattern, particularly if you are re-using
-column names,as data-type coercion could result in some column types being
-switched backwards and forwards, and other infinite loop problems.

@@ -18,7 +18,7 @@ a formatted string representation of an \code{iface}
 Format an \code{iface} specification for printing
 }
 \examples{
-my_iface = iface( 
+my_iface = iface(
   col1 = integer + group_unique ~ "an integer column"
 )
 

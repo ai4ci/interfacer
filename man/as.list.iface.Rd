@@ -21,7 +21,7 @@ a list representation of the \code{iface} input.
 Cast an \code{iface} to a plain list.
 }
 \examples{
-my_iface = iface( 
+my_iface = iface(
   col1 = integer + group_unique ~ "an integer column"
 )
 

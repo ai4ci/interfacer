@@ -11,7 +11,7 @@ have an iface specified for that dataframe."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">interfacer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@ have an <code>iface</code> specified for that dataframe.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">igroup_process</span><span class="op">(</span>df <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">fn</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">igroup_process</span><span class="op">(</span>df <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">fn</span>, <span class="va">...</span>, .iface <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -80,6 +80,13 @@ be separately handled and automatically passed to <code>fn</code> so in general 
 not be passed to <code>igroup_process</code> as an intermediary although it probably
 won't hurt. This behaviour is similar to <code>NextMethod</code> in S3 method
 dispatch.</p></dd>
+
+
+<dt id="arg--iface">.iface<a class="anchor" aria-label="anchor" href="#arg--iface"></a></dt>
+<dd><p>experimental feature to override the detection of the data from
+the enclosing function and use a directly supplied one. This can be useful
+if you want to process a dataframe by grouping defined by some criteria
+supplied at runtime.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -62,11 +62,11 @@ return a zero length vector of an appropriate type if passed \code{NULL}.
 \examples{
 
 test_df = tibble::tibble(
-  grp = c(rep("a",10),rep("b",10)), 
+  grp = c(rep("a",10),rep("b",10)),
   col1 = c(1:10,1:10)
 ) \%>\% dplyr::group_by(grp)
 
-my_iface = iface( 
+my_iface = iface(
   col1 = integer + group_unique ~ "an integer column",
   .default = test_df
 )
@@ -96,14 +96,14 @@ x()
 
 my_iface2 = iface(
   first_col = numeric ~ "column order example",
-  my_iface, 
+  my_iface,
   last_col = character ~ "another col", .groups = ~ first_col + col1
 )
 print(my_iface2)
 
 
 
-my_iface_3 = iface( 
+my_iface_3 = iface(
   col1 = integer + group_unique ~ "an integer column",
   .default = test_df_2
 )
@@ -113,7 +113,7 @@ x = function(d = my_iface_3) {ivalidate(d)}
 try(x())
 
 test_df_2 = tibble::tibble(
-  grp = c(rep("a",10),rep("b",10)), 
+  grp = c(rep("a",10),rep("b",10)),
   col1 = c(1:10,1:10)
 ) \%>\% dplyr::group_by(grp)
 

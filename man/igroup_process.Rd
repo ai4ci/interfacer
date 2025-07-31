@@ -4,7 +4,7 @@
 \alias{igroup_process}
 \title{Handle unexpected additional grouping structure}
 \usage{
-igroup_process(df = NULL, fn, ...)
+igroup_process(df = NULL, fn, ..., .iface = NULL)
 }
 \arguments{
 \item{df}{a dataframe from an enclosing function in which the grouping may or
@@ -23,6 +23,11 @@ be separately handled and automatically passed to \code{fn} so in general should
 not be passed to \code{igroup_process} as an intermediary although it probably
 won't hurt. This behaviour is similar to \code{NextMethod} in S3 method
 dispatch.}
+
+\item{.iface}{experimental feature to override the detection of the data from
+the enclosing function and use a directly supplied one. This can be useful
+if you want to process a dataframe by grouping defined by some criteria
+supplied at runtime.}
 }
 \value{
 the result of calling \code{fn(df, ...)} on each unexpected group

@@ -24,6 +24,10 @@
 #'   not be passed to `igroup_process` as an intermediary although it probably
 #'   won't hurt. This behaviour is similar to `NextMethod` in S3 method
 #'   dispatch.
+#' @param .iface experimental feature to override the detection of the data from
+#'   the enclosing function and use a directly supplied one. This can be useful
+#'   if you want to process a dataframe by grouping defined by some criteria
+#'   supplied at runtime.
 #'
 #' @concept interface
 #'
@@ -107,12 +111,12 @@
 #' ggplot2::diamonds %>% dplyr::group_by(cut,clarity,color) %>%
 #'    recursive_example() %>%
 #'    dplyr::glimpse()
-igroup_process = function(df = NULL, fn, ...) {
+igroup_process = function(df = NULL, fn, ..., .iface = NULL) {
   if (rlang::is_missing(fn)) {
     fn = rlang::caller_fn()
   }
   dispatch_fn = rlang::as_function(fn)
-  # Get the spec from the enclosing/caller function
+
   dname = tryCatch(rlang::as_label(rlang::ensym(df)), error = function(e) {
     return(NA)
   })
@@ -128,7 +132,12 @@ igroup_process = function(df = NULL, fn, ...) {
     dname = .get_first_param_name()
   }
   fname = .get_fn_name(caller_fn)
-  spec = .get_spec(caller_fn, dname)
+  if (is.null(.iface)) {
+    # Get the spec from the enclosing/caller function
+    spec = .get_spec(caller_fn, dname)
+  } else {
+    spec = .iface
+  }
 
   exp_grps = .spec_grps(spec)
   obs_grps = dplyr::group_vars(df)
@@ -212,10 +221,14 @@ igroup_process = function(df = NULL, fn, ...) {
 
   if (length(additional_grps) == 0) {
     if (identical(caller_fn, dispatch_fn)) {
-      ## recursion detected. we need to exist the igroup_process loop and
+      ## This call to igroup_process happening within another top level call
+      ## TODO: update progress maybe?
+      ## we need to exist the igroup_process and
       ## return to the calling function to complete it
       return(NULL)
     } else {
+      # The default case is that the input is the correct grouping
+      # We can check it conforms to the spec:
       df = iconvert(df, spec, ...)
       if (is.null(df)) {
         stop("Could not validate dataframe input.", call. = FALSE)
@@ -228,6 +241,7 @@ igroup_process = function(df = NULL, fn, ...) {
       out = do.call(dispatch_fn, params, envir = env)
     }
   } else {
+    ## TODO: setup progress monitor?
     # wrap the call to fn in a group_modify grouped with the unexpected groupings
     df = df %>% dplyr::group_by(dplyr::across(dplyr::all_of(additional_grps)))
     out = df %>%

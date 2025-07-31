@@ -13,7 +13,7 @@ for conformance to an iface specification using ivalidate()."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">interfacer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,11 +115,11 @@ return a zero length vector of an appropriate type if passed <code>NULL</code>.<
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">test_df</span> <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  grp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="fl">10</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"b"</span>,<span class="fl">10</span><span class="op">)</span><span class="op">)</span>, </span></span>
+<span class="r-in"><span>  grp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="fl">10</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"b"</span>,<span class="fl">10</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  col1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">grp</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">my_iface</span> <span class="op">=</span> <span class="fu">iface</span><span class="op">(</span> </span></span>
+<span class="r-in"><span><span class="va">my_iface</span> <span class="op">=</span> <span class="fu">iface</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  col1 <span class="op">=</span> <span class="va">integer</span> <span class="op">+</span> <span class="va">group_unique</span> <span class="op">~</span> <span class="st">"an integer column"</span>,</span></span>
 <span class="r-in"><span>  .default <span class="op">=</span> <span class="va">test_df</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
@@ -149,11 +149,11 @@ return a zero length vector of an appropriate type if passed <code>NULL</code>.<
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># this fails as x is of the wrong type</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">x</span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>col1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"b"</span>,<span class="st">"c"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : input column `col1` in function parameter `&lt;unknown&gt;(df = ?)` cannot be coerced to a integer + group_unique: non numeric format</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : input column `col1` in function parameter `x(df = ?)` cannot be coerced to a integer + group_unique: non numeric format</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># this fails as x has duplicates</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">x</span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>col1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">3</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : input column `col1` in function parameter `&lt;unknown&gt;(df = ?)` cannot be coerced to a integer + group_unique: values are not unique within each group; check grouping is correct</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : input column `col1` in function parameter `x(df = ?)` cannot be coerced to a integer + group_unique: values are not unique within each group; check grouping is correct</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># this gives the default value</span></span></span>
 <span class="r-in"><span><span class="fu">x</span><span class="op">(</span><span class="op">)</span></span></span>
@@ -185,7 +185,7 @@ return a zero length vector of an appropriate type if passed <code>NULL</code>.<
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">my_iface2</span> <span class="op">=</span> <span class="fu">iface</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  first_col <span class="op">=</span> <span class="va">numeric</span> <span class="op">~</span> <span class="st">"column order example"</span>,</span></span>
-<span class="r-in"><span>  <span class="va">my_iface</span>, </span></span>
+<span class="r-in"><span>  <span class="va">my_iface</span>,</span></span>
 <span class="r-in"><span>  last_col <span class="op">=</span> <span class="va">character</span> <span class="op">~</span> <span class="st">"another col"</span>, .groups <span class="op">=</span> <span class="op">~</span> <span class="va">first_col</span> <span class="op">+</span> <span class="va">col1</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">my_iface2</span><span class="op">)</span></span></span>
@@ -197,7 +197,7 @@ return a zero length vector of an appropriate type if passed <code>NULL</code>.<
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">my_iface_3</span> <span class="op">=</span> <span class="fu">iface</span><span class="op">(</span> </span></span>
+<span class="r-in"><span><span class="va">my_iface_3</span> <span class="op">=</span> <span class="fu">iface</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  col1 <span class="op">=</span> <span class="va">integer</span> <span class="op">+</span> <span class="va">group_unique</span> <span class="op">~</span> <span class="st">"an integer column"</span>,</span></span>
 <span class="r-in"><span>  .default <span class="op">=</span> <span class="va">test_df_2</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
@@ -208,7 +208,7 @@ return a zero length vector of an appropriate type if passed <code>NULL</code>.<
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error in eval(ex, env) : object 'test_df_2' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">test_df_2</span> <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  grp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="fl">10</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"b"</span>,<span class="fl">10</span><span class="op">)</span><span class="op">)</span>, </span></span>
+<span class="r-in"><span>  grp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="fl">10</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"b"</span>,<span class="fl">10</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  col1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">grp</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
