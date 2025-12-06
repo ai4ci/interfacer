@@ -44,7 +44,7 @@ extract_mean = function(df, ...) {
 extract_mean.i1 = function(df = i1, ...) {
   message("using i1")
   # input validation is not required in functions that are being called using
-  # `idispatch` as the validation occurs during dispatch. 
+  # `idispatch` as the validation occurs during dispatch.
   mean(df$col1)
 }
 
@@ -53,17 +53,23 @@ extract_mean.i2 = function(df = i2, uplift = 1, ...) {
   mean(df$col2)+uplift
 }
 
-# this input matches `i1` and the `extract_mean` call is dispatched 
+# this input matches `i1` and the `extract_mean` call is dispatched
 # via `extract_mean.i1`
 test = tibble::tibble( col2 = 1:10 )
-extract_mean(test, uplift = 50)
+tmp = extract_mean(test, uplift = 50)
+testthat::expect_equal(tmp, 55.5)
 
-# this input matches `i2` and the `extract_mean` call is dispatched 
-# via `extract_mean.i2`
+# this input matches `i2` and the `extract_mean` call is dispatched
+# via `extract_mean.i2` and the uplift is not applied
 test2 = tibble::tibble( col1 = 1:10 )
-extract_mean(test2, uplift = 50)
+tmp2 = extract_mean(test2, uplift = 50)
+testthat::expect_equal(tmp2, 5.5)
 
-# This input does not match any of the allowable input specifications and 
+# In the event that a parameter refers to itself we need to do somthing special
+tmp3 = extract_mean(test, uplift = mean(test$col2))
+testthat::expect_equal(tmp3, 11)
+
+# This input does not match any of the allowable input specifications and
 # generates an error.
 test3 = tibble::tibble( wrong_col = 1:10 )
 try(extract_mean(test3, uplift = 50))

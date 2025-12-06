@@ -52,9 +52,14 @@
 #' testthat::expect_equal(tmp, 55.5)
 #'
 #' # this input matches `i2` and the `extract_mean` call is dispatched
-#' # via `extract_mean.i2`
+#' # via `extract_mean.i2` and the uplift is not applied
 #' test2 = tibble::tibble( col1 = 1:10 )
-#' extract_mean(test2, uplift = 50)
+#' tmp2 = extract_mean(test2, uplift = 50)
+#' testthat::expect_equal(tmp2, 5.5)
+#'
+#' # In the event that a parameter refers to itself we need to do somthing special
+#' tmp3 = extract_mean(test, uplift = mean(test$col2))
+#' testthat::expect_equal(tmp3, 11)
 #'
 #' # This input does not match any of the allowable input specifications and
 #' # generates an error.
@@ -63,6 +68,7 @@
 idispatch = function(x, ..., .default = NULL) {
   # have to dispatch using declared params from caller environment
   env = rlang::caller_env()
+  env = rlang::env_clone(env)
   call = rlang::caller_call()
   dots = rlang::list2(...)
   if (any(names(dots) == "")) {
@@ -94,12 +100,19 @@ idispatch = function(x, ..., .default = NULL) {
       # the original (undispatched) call is modified to the matching function
       # name and the new variable name.
 
-      conv_name = sprintf(".%s.%s", format(call[[2]]), fn_name)
+      orig_name = format(call[[2]])
+      conv_name = sprintf(".%s.%s", orig_name, fn_name)
+      # TODO: review this
+      # Weird behaviour when a function called with fn(x, y=fn2(x)) becuse
+      # the call becomes fn(x_mod, y=fn2(x)) but x does not exist maybe??
+      old = get(orig_name, envir = env)
+      assign(orig_name, x, envir = env)
       assign(conv_name, x2, envir = env)
       call[[1]] = as.symbol(fn_name)
       call[[2]] = as.symbol(conv_name)
       tmp = eval(call, envir = env)
       assign(conv_name, NULL, envir = env)
+      assign(orig_name, old, envir = env)
       return(tmp)
     } else {
       errors = c(errors, fn_name, " - ", as.character(x2))

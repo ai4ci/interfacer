@@ -17,7 +17,7 @@ Description: A dataframe validation framework for package builders who use
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2.9004
+RoxygenNote: 7.3.3.9007
 Language: en-GB
 Imports: 
     dplyr,
