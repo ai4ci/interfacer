@@ -105,7 +105,11 @@ idispatch = function(x, ..., .default = NULL) {
       # TODO: review this
       # Weird behaviour when a function called with fn(x, y=fn2(x)) becuse
       # the call becomes fn(x_mod, y=fn2(x)) but x does not exist maybe??
-      old = get(orig_name, envir = env)
+      old = if (exists(orig_name, envir = env)) {
+        get(orig_name, envir = env)
+      } else {
+        NULL
+      }
       assign(orig_name, x, envir = env)
       assign(conv_name, x2, envir = env)
       call[[1]] = as.symbol(fn_name)
