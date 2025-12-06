@@ -148,6 +148,11 @@ igroup_process = function(df = NULL, fn, ..., .iface = NULL) {
   # get any dots
   if ("..." %in% names(formals(caller_fn))) {
     # evaluate `...` in the caller function environment.
+    # TODO: this forces evaluation of the `...` parameters.
+    # This maybe makes sense given the nature but in idispatch we have moved
+    # to an alternative with rewrites data back to env rewrites the function
+    # call and evals it in env.
+    # TBH This is a different use case I think.
     tmp = do.call(rlang::list2, list(as.symbol("...")), envir = env)
     params = c(as.list(env), tmp)
   } else {

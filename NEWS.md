@@ -65,3 +65,8 @@ function body
 
 * experimental support for group processing by an externally supplied interface 
 spec
+
+
+# interfacer 0.3.8
+
+* Change in `idispatch` to allow lazy evaluation in parameters

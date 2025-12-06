@@ -1,0 +1,239 @@
+# Multiple dispatch based on dataframes
+
+``` r
+library(interfacer)
+```
+
+## Rationale
+
+The S3 type system allows for dispatch based on the first argument of a
+function. In the situation where we are developing functions that use
+dataframes as input selecting a dispatch function needs to be based on
+the structure of the input rather than its class. `interfacer` can use
+`iface` specifications to associate a particular action with a specific
+input type.
+
+## Dispatch
+
+Dispatching to one of a number of functions based on the nature of a
+dataframe input is enabled by `idispatch(...)`. This emulates the
+behaviour of `S3` classes but for dataframes, based on their columns and
+also their grouping. Consider the following `iface` specifications:
+
+``` r
+i_test = iface(
+  id = integer ~ "an integer ID",
+  test = logical ~ "the test result"
+)
+
+# Extends the i_test to include an additional column
+i_test_extn = iface(
+  i_test,
+  extra = character ~ "a new value",
+  .groups = FALSE
+)
+```
+
+We can create specific handlers for each type of data and decide which
+function to dispatch to at runtime based on the input dataframe. The
+handlers are specified in the format `function_name = iface constraint`.
+
+``` r
+
+# The generic function
+disp_example = function(x, ...) {
+  idispatch(x,
+    disp_example.extn = i_test_extn,
+    disp_example.no_extn = i_test
+  )
+}
+
+# The handler for extended input dataframe types
+disp_example.extn = function(x = i_test_extn, ...) {
+  message("extended data function")
+  return(colnames(x))
+}
+
+# The handler for non-extended input dataframe types
+disp_example.no_extn = function(x = i_test, ...) {
+  message("not extended data function")
+  return(colnames(x))
+}
+```
+
+If we call `disp_example()` with data that matches the `i_test_extn`
+specification we get one type of behaviour:
+
+``` r
+
+tmp = tibble::tibble(
+    id=c("1","2","3"),
+    test = c(TRUE,FALSE,TRUE),
+    extra = 1.1
+)
+
+tmp %>% disp_example()
+#> extended data function
+#> [1] "id"    "test"  "extra"
+```
+
+But if we call `disp_example()` with data that only matches the `i_test`
+specification we get different behaviour:
+
+``` r
+# this matches the i_test_extn specification:
+tmp2 = tibble::tibble(
+    id=c("1","2","3"),
+    test = c(TRUE,FALSE,TRUE)
+)
+
+tmp2 %>% disp_example()
+#> not extended data function
+#> [1] "id"   "test"
+```
+
+I’ve used this mechanism, for example, to configure how plots are
+produced depending on the input.
+
+The order of the rules provided to `idispatch` is important. In general
+the more detailed specifications needing to be provided first, and the
+more generic specifications last.
+
+## Grouping based dispatch
+
+It is often useful to have a function that can expects a specific
+grouping but can handle additional groups. One way of handling these is
+to use `purrr` and nest columns extensively. Nesting data in the
+unexpected groups and repeatedly applying the function you want. An
+alternative `dplyr` solution is to use a `group_modify`. `interfacer`
+leverages this second option to automatically determine a grouping
+necessary for a pipeline function from the stated grouping requirements
+and automatically handle them without additional coding in the package.
+
+For example if we have the following `iface` the input for a function
+must be grouped only by the `color` column:
+
+``` r
+ # This specification requires that the dataframe is grouped only by the color
+ # column
+i_diamond_price = interfacer::iface(
+   color = enum(`D`,`E`,`F`,`G`,`H`,`I`,`J`, .ordered=TRUE) ~ "the color column",
+   price = integer ~ "the price column",
+   .groups = ~ color
+ )
+```
+
+A package developer writing a pipeline function may use this fact to
+handle possible additional grouping by using a `igroup_process(df, ...)`
+
+``` r
+# An example function which would be exported in a package
+# This function expects a dataframe with a colour and price column, grouped
+# by price.
+mean_price_by_colour = function(df = i_diamond_price, extra_param = ".") {
+
+   # When called with a dataframe with extra groups `igroup_process` will
+   # regroup the dataframe according to the structure
+   # defined for `i_diamond_price` and apply the inner function to each group
+   # after first calling `ivalidate` on each group.
+
+   igroup_process(df,
+     # the real work of this function is provided as an anonymous inner
+     # function (but can be any other function e.g. package private function
+     # but not a purrr style lambda). Ideally this function parameters are named the
+     # same as the enclosing function (here `mean_price_by_colour(df,extra_param)`), however
+     # there is some flexibility here. The special `.groupdata` parameter will
+     # be populated with the values of the unexpected grouping.
+
+     function(df, extra_param, .groupdata) {
+       message(extra_param, appendLF = FALSE)
+       if (nrow(.groupdata) == 0) message("N.B. zero length group data")
+       return(df %>% dplyr::summarise(mean_price = mean(price)))
+     }
+
+   )
+ }
+```
+
+If we pass this to correctly grouped data conforming to
+`i_diamond_price` the inner function is executed once transparently,
+after the input has been validated:
+
+``` r
+# The correctly grouped dataframe. The `ex_mean` function calculates the mean
+ # price for each `color` group.
+ ggplot2::diamonds %>%
+   dplyr::group_by(color) %>%
+   mean_price_by_colour(extra_param = "without additional groups... ") %>%
+   dplyr::glimpse()
+#> without additional groups... N.B. zero length group data
+#> Rows: 7
+#> Columns: 2
+#> $ color      <ord> D, E, F, G, H, I, J
+#> $ mean_price <dbl> 3169.954, 3076.752, 3724.886, 3999.136, 4486.669, 5091.875,…
+```
+
+If an additionally grouped dataframe is provided by the user. The
+`mean_price_by_colour` function calculates the mean price for each
+`cut`,`clarity`, and `color` combination. Data validation happens once
+per group, which affects interpretation of uniqueness.
+
+``` r
+ggplot2::diamonds %>%
+  dplyr::group_by(cut, color, clarity) %>%
+  mean_price_by_colour() %>%
+  dplyr::glimpse()
+#> ........................................
+#> Rows: 276
+#> Columns: 4
+#> Groups: cut, clarity [40]
+#> $ cut        <ord> Fair, Fair, Fair, Fair, Fair, Fair, Fair, Fair, Fair, Fair,…
+#> $ clarity    <ord> I1, I1, I1, I1, I1, I1, I1, SI2, SI2, SI2, SI2, SI2, SI2, S…
+#> $ color      <ord> D, E, F, G, H, I, J, D, E, F, G, H, I, J, D, E, F, G, H, I,…
+#> $ mean_price <dbl> 7383.000, 2095.222, 2543.514, 3187.472, 4212.962, 3501.000,…
+```
+
+The output of this is actually grouped by `cut` as the `color` column
+grouping is consumed by the nested function in `igroup_process`.
+
+`igroup_process` can also be used recursively for a very succinct
+handling of additional grouping. In this case the function being
+developed calls `igroup_process` with itself as a parameter. If the
+input is correctly formatted the `igroup_process` exits, otherwise it
+splits the input into the correct format and processes each group
+individually:
+
+``` r
+ recursive_example = function(df = i_diamond_price) {
+
+   # call enclosing function recursively if additional groups detected
+   igroup_process(df)
+   
+   # code after this point is only executed if the grouping is correct
+   # it will be executed once per additional group.
+   # it must return a dataframe
+   return(tibble::tibble("rows detected:"=nrow(df)))
+   
+ }
+
+# this input is grouped as the specification is expecting
+# the i_group_process does nothing.
+ ggplot2::diamonds %>% dplyr::group_by(color) %>%
+    recursive_example() %>%
+    dplyr::glimpse()
+#> Rows: 1
+#> Columns: 1
+#> $ `rows detected:` <int> 53940
+ 
+# this input has additional grouping beyond the specification but is handled 
+# gracefully
+ ggplot2::diamonds %>% dplyr::group_by(cut,clarity,color) %>%
+    recursive_example() %>%
+    dplyr::glimpse()
+#> Rows: 40
+#> Columns: 3
+#> Groups: cut, clarity [40]
+#> $ cut              <ord> Fair, Fair, Fair, Fair, Fair, Fair, Fair, Fair, Good,…
+#> $ clarity          <ord> I1, SI2, SI1, VS2, VS1, VVS2, VVS1, IF, I1, SI2, SI1,…
+#> $ `rows detected:` <int> 210, 466, 408, 261, 170, 69, 17, 9, 96, 1081, 1560, 9…
+```

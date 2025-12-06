@@ -6,7 +6,7 @@
 [![interfacer status badge](https://ai4ci.r-universe.dev/badges/interfacer)](https://ai4ci.r-universe.dev)
 [![CRAN status](https://www.r-pkg.org/badges/version/interfacer)](https://CRAN.R-project.org/package=interfacer)
 [![metacran downloads](https://cranlogs.r-pkg.org/badges/last-week/interfacer)](https://cran.r-project.org/package=interfacer)
-[![EPSRC badge](https://img.shields.io/badge/EPSRC%20grant-EP%2FY028392%2F1-05acb5)](https://gow.epsrc.ukri.org/NGBOViewGrant.aspx?GrantRef=EP/Y028392/1)
+[![EPSRC badge](https://img.shields.io/badge/EPSRC%20grant-EP%2FY028392%2F1-05acb5)](https://gtr.ukri.org/projects?ref=EP%2FY028392%2F1)
 <!-- badges: end -->
 
 `interfacer` is primarily aimed at R package developers. It provides a framework
@@ -124,4 +124,4 @@ a package.
 
 The authors gratefully acknowledge the support of the UK Research and Innovation
 AI programme of the Engineering and Physical Sciences Research Council [EPSRC
-grant EP/Y028392/1](https://gow.epsrc.ukri.org/NGBOViewGrant.aspx?GrantRef=EP/Y028392/1).
+grant EP/Y028392/1](https://gtr.ukri.org/projects?ref=EP%2FY028392%2F1).

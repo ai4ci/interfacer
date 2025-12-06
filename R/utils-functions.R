@@ -54,9 +54,9 @@
   )
   nframe = nframe - 1
   if (nframe < 1) {
-    stop("no block found")
+    stop(sprintf("no %s found", .class))
   }
-  .search_call_stack(nframe)
+  .search_call_stack(nframe, .class)
 }
 
 #' Determine whether context is in-development or deployed.
@@ -134,11 +134,18 @@
   return(FALSE)
 }
 
-.find_namespace = function(env) {
+.find_namespace = function(env = rlang::caller_env()) {
+  if (rlang::is_function(env)) {
+    env = rlang::fn_env(env)
+  }
   while (!identical(env, emptyenv())) {
-    if ("package" %in% names(attributes(env))) {
-      return(env)
-    }
+    try(
+      {
+        getNamespaceName(env)
+        return(env)
+      },
+      silent = TRUE
+    )
     env <- parent.env(env)
   }
   NULL

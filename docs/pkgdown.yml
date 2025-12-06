@@ -1,5 +1,5 @@
 pandoc: '3.4'
-pkgdown: 2.1.3
+pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   consistency: consistency.html
@@ -7,7 +7,7 @@ articles:
   dispatch: dispatch.html
   interfacer: interfacer.html
   nesting: nesting.html
-last_built: 2025-07-31T11:23Z
+last_built: 2025-12-06T00:49Z
 urls:
   reference: https://ai4ci.github.io/interfacer/reference
   article: https://ai4ci.github.io/interfacer/articles
