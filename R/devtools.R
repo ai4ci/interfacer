@@ -580,6 +580,8 @@ A dataframe containing the following columns:
 
 #' Use a dataframe in a package including structure based documentation
 #'
+#' `r lifecycle::badge('deprecated')`
+#'
 #' Using the interfacer framework you can document data during development.
 #' This provides the basic documentation framework for a dataset based on a dataframe
 #' in the correct format into the right place.

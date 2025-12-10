@@ -10,7 +10,7 @@ for dispatch.
 ## Usage
 
 ``` r
-idispatch(x, ..., .default = NULL)
+idispatch(x, ..., .default = NULL, .prune = FALSE)
 ```
 
 ## Arguments
@@ -29,6 +29,10 @@ idispatch(x, ..., .default = NULL)
 
   a function to apply in the situation where none of the rules can be
   matched. The default results in an error being thrown.
+
+- .prune:
+
+  get rid of excess columns that are not in the spec.
 
 ## Value
 
@@ -56,7 +60,7 @@ extract_mean = function(df, ...) {
 extract_mean.i1 = function(df = i1, ...) {
   message("using i1")
   # input validation is not required in functions that are being called using
-  # `idispatch` as the validation occurs during dispatch. 
+  # `idispatch` as the validation occurs during dispatch.
   mean(df$col1)
 }
 
@@ -65,26 +69,37 @@ extract_mean.i2 = function(df = i2, uplift = 1, ...) {
   mean(df$col2)+uplift
 }
 
-# this input matches `i1` and the `extract_mean` call is dispatched 
-# via `extract_mean.i1`
-test = tibble::tibble( col2 = 1:10 )
-extract_mean(test, uplift = 50)
-#> using i2
-#> [1] 55.5
-
-# this input matches `i2` and the `extract_mean` call is dispatched 
+# this input matches `i2` and the `extract_mean` call is dispatched
 # via `extract_mean.i2`
-test2 = tibble::tibble( col1 = 1:10 )
-extract_mean(test2, uplift = 50)
-#> using i1
-#> [1] 5.5
+test = tibble::tibble( col2 = 1:10 )
+tmp = extract_mean(test, uplift = 50, this_env = TRUE)
+#> using i2
+testthat::expect_equal(tmp, 55.5)
 
-# This input does not match any of the allowable input specifications and 
+# this input matches `i1` and the `extract_mean` call is dispatched
+# via `extract_mean.i1` and the uplift is not applied
+test2 = tibble::tibble( col1 = 1:10 )
+tmp2 = extract_mean(test2, uplift = 50)
+#> using i1
+testthat::expect_equal(tmp2, 5.5)
+
+# In the event that a parameter refers to itself we need to do somthing special
+tmp3 = extract_mean(test, uplift = mean(test$col2))
+#> using i2
+testthat::expect_equal(tmp3, 11)
+
+# This input does not match any of the allowable input specifications and
 # generates an error.
 test3 = tibble::tibble( wrong_col = 1:10 )
 try(extract_mean(test3, uplift = 50))
 #> Error : the parameter in extract_mean(...) does not match any of the expected formats.
-#> extract_mean.i1 - Error : missing columns: col1
-#> extract_mean.i2 - Error : missing columns: col2
+#> extract_mean.i1 - Error : missing columns in the `df` parameter of `extract_mean.i1(...)`.
+#> missing: col1
+#> consider renaming / creating missing columns before calling `extract_mean.i1(...)`
+#> 
+#> extract_mean.i2 - Error : missing columns in the `df` parameter of `extract_mean.i2(...)`.
+#> missing: col2
+#> consider renaming / creating missing columns before calling `extract_mean.i2(...)`
+#> 
 #> 
 ```

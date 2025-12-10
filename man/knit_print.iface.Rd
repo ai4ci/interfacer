@@ -4,7 +4,7 @@
 \alias{knit_print.iface}
 \title{Format an \code{iface} specification for printing}
 \usage{
-\method{knit_print}{iface}(x, ...)
+knit_print.iface(x, ...)
 }
 \arguments{
 \item{x}{an \code{iface} specification}

@@ -114,7 +114,7 @@ system.time(
 #> $ clarity <ord> SI2, SI1, VS1, VS2, SI2, VVS2, VVS1, SI1, VS2, VS1, SI1, VS1, …
 #> $ data    <list> [<tbl_df[469 x 7]>], [<tbl_df[614 x 7]>], [<tbl_df[89 x 7]>],…
 #>    user  system elapsed 
-#>   3.068   0.014   3.083
+#>   3.031   0.015   3.047
 ```
 
 In this example the price column is removes before nesting. Errors in

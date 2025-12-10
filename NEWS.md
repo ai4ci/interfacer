@@ -66,7 +66,13 @@ function body
 * experimental support for group processing by an externally supplied interface 
 spec
 
+# interfacer 0.4.0
 
-# interfacer 0.3.8
+* Change in `idispatch` to allow lazy evaluation in parameters and correct 
+behaviour in the context of data-mask processing and defusal / quoted evaluation. 
+* Some internal (but exported) demo testing functions added to allow more 
+rigorous outside of package scope (e.g. `?demo_idispatch`)
+* Much improved testing of `idispatch` using demo functions.
+* No functional downstream impacts should be obvious unless anyone relying on 
+eager evaluation in previous versions of `idispatch`
 
-* Change in `idispatch` to allow lazy evaluation in parameters

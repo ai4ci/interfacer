@@ -4,7 +4,7 @@
 \alias{idispatch}
 \title{Dispatch to a named function based on the characteristics of a dataframe}
 \usage{
-idispatch(x, ..., .default = NULL)
+idispatch(x, ..., .default = NULL, .prune = FALSE)
 }
 \arguments{
 \item{x}{a dataframe}
@@ -13,6 +13,8 @@ idispatch(x, ..., .default = NULL)
 
 \item{.default}{a function to apply in the situation where none of the rules
 can be matched. The default results in an error being thrown.}
+
+\item{.prune}{get rid of excess columns that are not in the spec.}
 }
 \value{
 the result of dispatching the dataframe to the first function that
@@ -53,14 +55,14 @@ extract_mean.i2 = function(df = i2, uplift = 1, ...) {
   mean(df$col2)+uplift
 }
 
-# this input matches `i1` and the `extract_mean` call is dispatched
-# via `extract_mean.i1`
+# this input matches `i2` and the `extract_mean` call is dispatched
+# via `extract_mean.i2`
 test = tibble::tibble( col2 = 1:10 )
-tmp = extract_mean(test, uplift = 50)
+tmp = extract_mean(test, uplift = 50, this_env = TRUE)
 testthat::expect_equal(tmp, 55.5)
 
-# this input matches `i2` and the `extract_mean` call is dispatched
-# via `extract_mean.i2` and the uplift is not applied
+# this input matches `i1` and the `extract_mean` call is dispatched
+# via `extract_mean.i1` and the uplift is not applied
 test2 = tibble::tibble( col1 = 1:10 )
 tmp2 = extract_mean(test2, uplift = 50)
 testthat::expect_equal(tmp2, 5.5)
