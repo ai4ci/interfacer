@@ -18,8 +18,6 @@ Ungrouped.
 }
 
 \item{...}{not used}
-
-\item{another}{an example}
 }
 \value{
 a test output, format will be automatically documented

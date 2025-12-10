@@ -24,11 +24,13 @@ use_dataframe(
 nothing, used for side effects.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
 Using the interfacer framework you can document data during development.
 This provides the basic documentation framework for a dataset based on a dataframe
 in the correct format into the right place.
-}
-\details{
+
 If this is your only use case for \code{interfacer} then you will not need
 to import \code{interfacer} in your package, as none of the generated code will
 depend on it.

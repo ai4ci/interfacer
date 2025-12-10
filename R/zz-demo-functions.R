@@ -33,7 +33,6 @@ demo_iparam_tag = function(
 #' Another example function
 #'
 #' @iparam mydata a more constrained input
-#' @param another an example
 #' @param ... not used
 #'
 #' @ireturn a test output, format will be automatically documented
@@ -50,11 +49,11 @@ demo_ireturn_tag = function(
 
 # idispatch testing ----
 
-#' Test the interfacer idispatch functions
+#' Test the interfacer `idispatch` functions
 #'
 #' Allows testing from the context of an installed package
 #' this is here for testing purposes only. The majority of functions are
-#' tested in testthat but one or two need package infrastructure to test
+#' tested in `testthat` but one or two need package infrastructure to test
 #' things like the documentation
 #'
 #' @iparam x one of 2 possibilities

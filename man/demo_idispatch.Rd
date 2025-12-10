@@ -2,7 +2,7 @@
 % Please edit documentation in R/zz-demo-functions.R
 \name{demo_idispatch}
 \alias{demo_idispatch}
-\title{Test the interfacer idispatch functions}
+\title{Test the interfacer \code{idispatch} functions}
 \usage{
 demo_idispatch(x, ...)
 }
@@ -34,7 +34,7 @@ a list of the parameters passed to one of two functions.
 \description{
 Allows testing from the context of an installed package
 this is here for testing purposes only. The majority of functions are
-tested in testthat but one or two need package infrastructure to test
+tested in \code{testthat} but one or two need package infrastructure to test
 things like the documentation
 }
 \examples{
