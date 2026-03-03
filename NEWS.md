@@ -68,7 +68,7 @@ spec
 
 # interfacer 0.4.0
 
-* Change in `idispatch` to allow lazy evaluation in parameters and correct 
+* Change in `igroup_dispatch` to allow lazy evaluation in parameters and correct 
 behaviour in the context of data-mask processing and defusal / quoted evaluation. 
 * Some internal (but exported) demo testing functions added to allow more 
 rigorous outside of package scope (e.g. `?demo_idispatch`)
