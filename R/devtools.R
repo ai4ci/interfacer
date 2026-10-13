@@ -40,7 +40,10 @@ iclip = function(df, df_name = deparse(substitute(df))) {
 
   tmp2 = paste0(tmp2, collapse = "\n\n")
 
-  message(df_name, " specification copied to clipboard... Ctrl-V to paste.")
+  message(
+    df_name,
+    " specification copied to clipboard... Ctrl-V to paste."
+  )
   clipr::write_clip(tmp2)
 }
 
@@ -180,7 +183,7 @@ iclip = function(df, df_name = deparse(substitute(df))) {
 #'
 #' @examples
 #' #' @param df `r idocument(x, df)`
-#' x = function(df = iface( col1 = integer ~ "an integer column" )) {}
+#' x = function(df = iface(col1 = integer ~ "an integer column")) {}
 #'
 #' cat(idocument(x, df))
 idocument = function(fn, param = NULL) {
@@ -215,8 +218,8 @@ idocument = function(fn, param = NULL) {
 #' @examples
 #' # This provides support to `roxygen2` and only gets executed in the context
 #' # of `devtools::document()`. There is no interactive use of this function.
-roxy_tag_parse.roxy_tag_iparam <- function(x) {
-  roxygen2::tag_two_part(x, "param", "description")
+roxy_tag_parse.roxy_tag_iparam = function(x) {
+  roxygen2::tag_two_part(x, "param", "description", multiline = TRUE)
 }
 
 #' Support for `@iparam` tags
@@ -237,7 +240,7 @@ roxy_tag_parse.roxy_tag_iparam <- function(x) {
 #' @examples
 #'
 #' # An example function definition:
-#' fn_definition <- "
+#' fn_definition = "
 #' #' This is a title
 #' #'
 #' #' This is the description.
@@ -261,7 +264,7 @@ roxy_tag_parse.roxy_tag_iparam <- function(x) {
 #' tmp = roxygen2::parse_text(fn_definition)
 #' print(tmp)
 #'
-roxy_tag_rd.roxy_tag_iparam <- function(x, base_path, env) {
+roxy_tag_rd.roxy_tag_iparam = function(x, base_path, env) {
   dname = x$val$name
   block = .search_call_stack(.class = "roxy_block")
   fn = block$object$value
@@ -405,8 +408,8 @@ roxy_tag_rd.roxy_tag_iparam <- function(x, base_path, env) {
 #' @examples
 #' # This provides support to `roxygen2` and only gets executed in the context
 #' # of `devtools::document()`. There is no interactive use of this function.
-roxy_tag_parse.roxy_tag_ireturn <- function(x) {
-  roxygen2::tag_value(x)
+roxy_tag_parse.roxy_tag_ireturn = function(x) {
+  roxygen2::tag_value(x, multiline = FALSE)
 }
 
 # .call_to_list = function(call) {
@@ -450,7 +453,9 @@ roxy_tag_parse.roxy_tag_ireturn <- function(x) {
   }
   for (i in seq_along(tmp)) {
     tmp2 = .find_icall(tmp[[i]], name, start, end)
-    if (!is.null(tmp2)) return(tmp2)
+    if (!is.null(tmp2)) {
+      return(tmp2)
+    }
   }
   return(NULL)
 }
@@ -473,7 +478,7 @@ roxy_tag_parse.roxy_tag_ireturn <- function(x) {
 #' @examples
 #'
 #' # An example function definition:
-#' fn_definition <- "
+#' fn_definition = "
 #' #' This is a title
 #' #'
 #' #' This is the description.
@@ -502,7 +507,7 @@ roxy_tag_parse.roxy_tag_ireturn <- function(x) {
 #' tmp = roxygen2::parse_text(fn_definition)
 #' print(tmp[[1]])
 #'
-roxy_tag_rd.roxy_tag_ireturn <- function(x, base_path, env) {
+roxy_tag_rd.roxy_tag_ireturn = function(x, base_path, env) {
   desc = x$val
   block = .search_call_stack(.class = "roxy_block")
   fn = block$object$value
@@ -550,7 +555,7 @@ roxy_tag_rd.roxy_tag_ireturn <- function(x, base_path, env) {
       out = sprintf(
         "%s
 
-A dataframe containing the following columns: 
+A dataframe containing the following columns:
 \\itemize{
 %s
 }

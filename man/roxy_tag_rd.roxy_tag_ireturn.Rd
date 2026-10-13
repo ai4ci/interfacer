@@ -26,7 +26,7 @@ the function is returning.
 \examples{
 
 # An example function definition:
-fn_definition <- "
+fn_definition = "
 #' This is a title
 #'
 #' This is the description.

@@ -22,7 +22,7 @@ Ungrouped.
 \value{
 a test output, format will be automatically documented
 
-A dataframe containing the following columns: 
+A dataframe containing the following columns:
 \itemize{
 \item id (integer) - an integer ID
 \item test (logical) - the test result
