@@ -2,17 +2,18 @@
 #'  parameter definitions
 #'
 #' `ivalidate(...)` is intended to be used within a function to check the validity of a data
-#' frame parameter (usually the first parameter) against an `ispec` which is
+#' frame parameter (usually the first parameter) against an `iface` specification which is
 #' given as a default value of a formal parameter.
 #'
 #' @param df a dataframe - if missing then the first parameter of the calling
 #'   function is assumed to be a dataframe.
-#' @param ... not used but `ivalidate` should be included in call to inherit
-#'   `.imap` from the caller function.
+#' @param ... not used.
 #' @param .imap  a set of mappings as an `imapper` object.
 #' @param .prune get rid of excess columns that are not in the spec.
-#' @param .default a default dataframe conforming to the specification. This
-#'   overrides any defaults defined in the interface specification
+#' @param .fix add in missing columns with `NA` or default values as defined in the
+#'  spec
+#' @param .default a default dataframe conforming to the spec. This
+#'   overrides any defaults defined in the enclosing function formal defaults
 #'
 #' @return a dataframe based on `df` with validity checks passed and `.imap`
 #'   mappings applied if present
@@ -36,6 +37,7 @@ ivalidate = function(
   ...,
   .imap = imapper(),
   .prune = FALSE,
+  .fix = FALSE,
   .default = NULL
 ) {
   dname = tryCatch(rlang::as_label(rlang::ensym(df)), error = function(e) {
@@ -102,7 +104,7 @@ ivalidate = function(
   }
 
   # OK lets try make the dataframe conform to the spec.
-  out = iconvert(df, spec, .imap, dname, fname, .has_dots, .prune)
+  out = iconvert(df, spec, .imap, dname, fname, .has_dots, .prune, .fix)
   return(out)
 }
 
@@ -135,6 +137,8 @@ ivalidate = function(
 #'   function is assumed to be a dataframe.
 #' @param iface the interface specification that `df` should conform to.
 #' @param .prune get rid of excess columns that are not in the specification.
+#' @param .fix add in missing columns with `NA` or default values as defined in the
+#'  spec
 #'
 #' @return a dataframe based on `df` with validity checks passed,
 #'   data-types coerced, and correct grouping applied to conform to `iface`
@@ -156,7 +160,7 @@ ivalidate = function(
 #' x(tibble::tibble(col_in = c(1,2,3)))
 #' output
 #'
-ireturn = function(df, iface, .prune = FALSE) {
+ireturn = function(df, iface, .prune = FALSE, .fix = FALSE) {
   env = rlang::caller_env()
   # bypass checks if the function is run in production
   if (!.should_run_checks()) {
@@ -170,10 +174,23 @@ ireturn = function(df, iface, .prune = FALSE) {
   fname = .get_fn_name(fn)
   out = df
   exp_grps = .spec_grps(spec)
-  obs_grps = dplyr::group_vars(out)
   exp_cols = .spec_cols(spec)
 
   missing = dplyr::setdiff(exp_cols, colnames(out))
+  if (.fix) {
+    for (m in missing) {
+      if (stringr::str_detect(.spec_type_of(iface, m),"default\\(.*\\)")) {
+        out = out %>% dplyr::mutate(!!m := NA)
+        missing = setdiff(missing, m)
+        if (m %in% exp_grps) {
+          out = out %>% dplyr::group_by(!!as.symbol(m), .add=TRUE)
+        }
+      }
+    }
+  }
+  
+  obs_grps = dplyr::group_vars(out)
+  
   if (length(missing) > 0) {
     stop(
       sprintf(
@@ -283,6 +300,7 @@ ireturn = function(df, iface, .prune = FALSE) {
 #' @param .fname the name of the function (optional).
 #' @param .has_dots internal library use only. Changes the nature of the error message.
 #' @param .prune do you want to remove non matching columns?
+#' @param .fix do you want to add missing columns with `NA` or default values?
 #' @param .env internal use only
 #'
 #' @return the input dataframe coerced to be conformant to the `iface`
@@ -295,9 +313,27 @@ ireturn = function(df, iface, .prune = FALSE) {
 #'   price = integer ~ "the price"
 #' )
 #'
+#' # success dataframe matches specification
 #' iconvert(ggplot2::diamonds, i_diamonds,.prune = TRUE)
 #'
+#' i_diamonds_2 = iface(
+#'   color = enum(D,E,F,G,H,I,J,extra) ~ "the colour",
+#'   price = integer ~ "the price",
+#'   depth2 = numeric + default(1) ~ "new depth",
+#'   .groups = ~ depth2
+#' )
 #'
+#' # succeeds as depth2 is filled in from default value
+#' iconvert(ggplot2::diamonds, i_diamonds_2,.prune = TRUE, .fix=TRUE)
+#' 
+#' i_diamonds_3 = iface(
+#'   color = enum(D,E,F,G,H,I,J,extra) ~ "the colour",
+#'   price = integer ~ "the price",
+#'   depth2 = numeric ~ "new depth"
+#' )
+#' 
+#' # fails as depth2 does not exist (and no default)
+#' try(iconvert(ggplot2::diamonds, i_diamonds_3,.prune = TRUE, .fix=TRUE))
 iconvert = function(
   df,
   iface,
@@ -306,6 +342,7 @@ iconvert = function(
   .fname = "<unknown>",
   .has_dots = TRUE,
   .prune = FALSE,
+  .fix = FALSE,
   .env = rlang::current_env()
 ) {
   #TODO cache this?
@@ -322,11 +359,24 @@ iconvert = function(
   }
 
   exp_grps = .spec_grps(spec)
-  obs_grps = dplyr::group_vars(out)
   exp_cols = .spec_cols(spec)
 
   # Check for missingness
   missing = dplyr::setdiff(exp_cols, colnames(out))
+  if (.fix) {
+    for (m in missing) {
+      if (stringr::str_detect(.spec_type_of(iface, m),"default\\(.*\\)")) {
+        out = out %>% dplyr::mutate(!!m := NA)
+        missing = setdiff(missing, m)
+        if (m %in% exp_grps) {
+          out = out %>% dplyr::group_by(!!as.symbol(m), .add=TRUE)
+        }
+      }
+    }
+  }
+  
+  obs_grps = dplyr::group_vars(out)
+  
   if (length(missing) > 0) {
     if (.dname == "nested") {
       stop("missing columns: ", .none(missing, ","), call. = FALSE)

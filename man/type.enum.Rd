@@ -22,8 +22,8 @@ levels. This will re-level factors with matching levels but in a different order
 Define a conformance rule to match a factor with specific levels.
 }
 \examples{
-f = type.enum(one,two,three)
-f(c("three","two","one"))
-f(factor(rep(1:3,5), labels = c("one","two","three")))
+f = type.enum(one, two, three)
+f(c("three", "two", "one"))
+f(factor(rep(1:3, 5), labels = c("one", "two", "three")))
 }
 \concept{rules}

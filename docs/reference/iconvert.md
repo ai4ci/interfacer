@@ -18,6 +18,7 @@ iconvert(
   .fname = "<unknown>",
   .has_dots = TRUE,
   .prune = FALSE,
+  .fix = FALSE,
   .env = rlang::current_env()
 )
 ```
@@ -52,6 +53,10 @@ iconvert(
 
   do you want to remove non matching columns?
 
+- .fix:
+
+  do you want to add missing columns with `NA` or default values?
+
 - .env:
 
   internal use only
@@ -69,6 +74,7 @@ i_diamonds = iface(
   price = integer ~ "the price"
 )
 
+# success dataframe matches specification
 iconvert(ggplot2::diamonds, i_diamonds,.prune = TRUE)
 #> # A tibble: 53,940 × 2
 #>    color price
@@ -85,4 +91,41 @@ iconvert(ggplot2::diamonds, i_diamonds,.prune = TRUE)
 #> 10 H       338
 #> # ℹ 53,930 more rows
 
+i_diamonds_2 = iface(
+  color = enum(D,E,F,G,H,I,J,extra) ~ "the colour",
+  price = integer ~ "the price",
+  depth2 = numeric + default(1) ~ "new depth",
+  .groups = ~ depth2
+)
+
+# succeeds as depth2 is filled in from default value
+iconvert(ggplot2::diamonds, i_diamonds_2,.prune = TRUE, .fix=TRUE)
+#> # A tibble: 53,940 × 3
+#> # Groups:   depth2 [1]
+#>    depth2 color price
+#>  *  <dbl> <fct> <int>
+#>  1      1 E       326
+#>  2      1 E       326
+#>  3      1 E       327
+#>  4      1 I       334
+#>  5      1 J       335
+#>  6      1 J       336
+#>  7      1 I       336
+#>  8      1 H       337
+#>  9      1 E       337
+#> 10      1 H       338
+#> # ℹ 53,930 more rows
+
+i_diamonds_3 = iface(
+  color = enum(D,E,F,G,H,I,J,extra) ~ "the colour",
+  price = integer ~ "the price",
+  depth2 = numeric ~ "new depth"
+)
+
+# fails as depth2 does not exist (and no default)
+try(iconvert(ggplot2::diamonds, i_diamonds_3,.prune = TRUE, .fix=TRUE))
+#> Error : missing columns in the `<unknown>` parameter of `<unknown>(...)`.
+#> missing: depth2
+#> consider renaming / creating missing columns before calling `<unknown>(...)`
+#> 
 ```

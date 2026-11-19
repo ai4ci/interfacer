@@ -7,7 +7,7 @@ specification.
 ## Usage
 
 ``` r
-ireturn(df, iface, .prune = FALSE)
+ireturn(df, iface, .prune = FALSE, .fix = FALSE)
 ```
 
 ## Arguments
@@ -24,6 +24,11 @@ ireturn(df, iface, .prune = FALSE)
 - .prune:
 
   get rid of excess columns that are not in the specification.
+
+- .fix:
+
+  add in missing columns with `NA` or default values as defined in the
+  spec
 
 ## Value
 

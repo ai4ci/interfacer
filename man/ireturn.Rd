@@ -4,7 +4,7 @@
 \alias{ireturn}
 \title{Validate and return a value from a function}
 \usage{
-ireturn(df, iface, .prune = FALSE)
+ireturn(df, iface, .prune = FALSE, .fix = FALSE)
 }
 \arguments{
 \item{df}{a dataframe - if missing then the first parameter of the calling
@@ -13,6 +13,9 @@ function is assumed to be a dataframe.}
 \item{iface}{the interface specification that \code{df} should conform to.}
 
 \item{.prune}{get rid of excess columns that are not in the specification.}
+
+\item{.fix}{add in missing columns with \code{NA} or default values as defined in the
+spec}
 }
 \value{
 a dataframe based on \code{df} with validity checks passed,

@@ -33,7 +33,7 @@ a markdown snippet
 
 ``` r
 #' @param df `r idocument(x, df)`
-x = function(df = iface( col1 = integer ~ "an integer column" )) {}
+x = function(df = iface(col1 = integer ~ "an integer column")) {}
 
 cat(idocument(x, df))
 #> A dataframe containing the following columns: 

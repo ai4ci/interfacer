@@ -32,11 +32,11 @@ a different order.
 ## Examples
 
 ``` r
-f = type.enum(one,two,three)
-f(c("three","two","one"))
+f = type.enum(one, two, three)
+f(c("three", "two", "one"))
 #> [1] three two   one  
 #> Levels: one two three
-f(factor(rep(1:3,5), labels = c("one","two","three")))
+f(factor(rep(1:3, 5), labels = c("one", "two", "three")))
 #>  [1] one   two   three one   two   three one   two   three one   two   three
 #> [13] one   two   three
 #> Levels: one two three

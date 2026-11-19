@@ -62,5 +62,7 @@ importFrom(forcats,as_factor)
 importFrom(lifecycle,deprecated)
 importFrom(magrittr,"%>%")
 importFrom(rlang,.data)
-importFrom(roxygen2,roxy_tag_parse)
-importFrom(roxygen2,roxy_tag_rd)
+importFrom(roxygen2,
+  roxy_tag_parse,
+  roxy_tag_rd
+)

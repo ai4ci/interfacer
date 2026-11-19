@@ -11,6 +11,8 @@
 #' @param .default a function to apply in the situation where none of the rules
 #'   can be matched. The default results in an error being thrown.
 #' @param .prune get rid of excess columns that are not in the spec.
+#' @param .fix add in missing columns with NA or default values as defined in the .
+#'  spec
 #'
 #' @return the result of dispatching the dataframe to the first function that
 #'   matches the rules in `...`. Matching is permissive in that the test is
@@ -20,13 +22,14 @@
 #' @concept interface
 #'
 #' @examples
-#' i1 = iface( col1 = integer ~ "An integer column" )
-#' i2 = iface( col2 = integer ~ "A different integer column" )
+#' i1 = iface(col1 = integer ~ "An integer column")
+#' i2 = iface(col2 = integer ~ "A different integer column")
 #'
 #' # this is an example function that would typically be inside a package, and
 #' # is exported from the package.
 #' extract_mean = function(df, ...) {
-#'   idispatch(df,
+#'   idispatch(
+#'     df,
 #'     extract_mean.i1 = i1,
 #'     extract_mean.i2 = i2
 #'   )
@@ -43,18 +46,18 @@
 #'
 #' extract_mean.i2 = function(df = i2, uplift = 1, ...) {
 #'   message("using i2")
-#'   mean(df$col2)+uplift
+#'   mean(df$col2) + uplift
 #' }
 #'
 #' # this input matches `i2` and the `extract_mean` call is dispatched
 #' # via `extract_mean.i2`
-#' test = tibble::tibble( col2 = 1:10 )
+#' test = tibble::tibble(col2 = 1:10)
 #' tmp = extract_mean(test, uplift = 50, this_env = TRUE)
 #' testthat::expect_equal(tmp, 55.5)
 #'
 #' # this input matches `i1` and the `extract_mean` call is dispatched
 #' # via `extract_mean.i1` and the uplift is not applied
-#' test2 = tibble::tibble( col1 = 1:10 )
+#' test2 = tibble::tibble(col1 = 1:10)
 #' tmp2 = extract_mean(test2, uplift = 50)
 #' testthat::expect_equal(tmp2, 5.5)
 #'
@@ -64,9 +67,9 @@
 #'
 #' # This input does not match any of the allowable input specifications and
 #' # generates an error.
-#' test3 = tibble::tibble( wrong_col = 1:10 )
+#' test3 = tibble::tibble(wrong_col = 1:10)
 #' try(extract_mean(test3, uplift = 50))
-idispatch = function(x, ..., .default = NULL, .prune = FALSE) {
+idispatch = function(x, ..., .default = NULL, .prune = FALSE, .fix = FALSE) {
   # This function redirects program flow based on the format of `x` by calling
   # one of a set of different functions with similar parameters. We however are
   # also validating `x` and may make some type changes before dispatching.
@@ -95,7 +98,10 @@ idispatch = function(x, ..., .default = NULL, .prune = FALSE) {
     stop("all parameters must be named", call. = FALSE)
   }
   if (!all(sapply(dots, is.iface))) {
-    stop("all `...` parameters must be `iface` specifications", call. = FALSE)
+    stop(
+      "all `...` parameters must be `iface` specifications",
+      call. = FALSE
+    )
   }
   errors = character()
   for (i in seq_along(dots)) {
@@ -112,7 +118,14 @@ idispatch = function(x, ..., .default = NULL, .prune = FALSE) {
 
     dname = deparse(substitute(x))
     x2 = try(
-      iconvert(x, ifc, .dname = dname, .fname = fn_name, .prune = .prune),
+      iconvert(
+        x,
+        ifc,
+        .dname = dname,
+        .fname = fn_name,
+        .prune = .prune,
+        .fix = .fix
+      ),
       silent = TRUE
     )
 

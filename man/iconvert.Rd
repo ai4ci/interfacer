@@ -12,6 +12,7 @@ iconvert(
   .fname = "<unknown>",
   .has_dots = TRUE,
   .prune = FALSE,
+  .fix = FALSE,
   .env = rlang::current_env()
 )
 }
@@ -29,6 +30,8 @@ iconvert(
 \item{.has_dots}{internal library use only. Changes the nature of the error message.}
 
 \item{.prune}{do you want to remove non matching columns?}
+
+\item{.fix}{do you want to add missing columns with \code{NA} or default values?}
 
 \item{.env}{internal use only}
 }
@@ -48,8 +51,26 @@ i_diamonds = iface(
   price = integer ~ "the price"
 )
 
+# success dataframe matches specification
 iconvert(ggplot2::diamonds, i_diamonds,.prune = TRUE)
 
+i_diamonds_2 = iface(
+  color = enum(D,E,F,G,H,I,J,extra) ~ "the colour",
+  price = integer ~ "the price",
+  depth2 = numeric + default(1) ~ "new depth",
+  .groups = ~ depth2
+)
 
+# succeeds as depth2 is filled in from default value
+iconvert(ggplot2::diamonds, i_diamonds_2,.prune = TRUE, .fix=TRUE)
+
+i_diamonds_3 = iface(
+  color = enum(D,E,F,G,H,I,J,extra) ~ "the colour",
+  price = integer ~ "the price",
+  depth2 = numeric ~ "new depth"
+)
+
+# fails as depth2 does not exist (and no default)
+try(iconvert(ggplot2::diamonds, i_diamonds_3,.prune = TRUE, .fix=TRUE))
 }
 \concept{interface}

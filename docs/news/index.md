@@ -80,7 +80,9 @@ CRAN release: 2025-02-03
 
 ## interfacer 0.4.0
 
-- Change in `idispatch` to allow lazy evaluation in parameters and
+CRAN release: 2025-12-15
+
+- Change in `igroup_dispatch` to allow lazy evaluation in parameters and
   correct behaviour in the context of data-mask processing and defusal /
   quoted evaluation.
 - Some internal (but exported) demo testing functions added to allow
@@ -89,3 +91,13 @@ CRAN release: 2025-02-03
 - Much improved testing of `idispatch` using demo functions.
 - No functional downstream impacts should be obvious unless anyone
   relying on eager evaluation in previous versions of `idispatch`
+
+## interfacer 0.4.1
+
+- Minor usability fixes for `@iparam` tags.
+
+## interfacer 0.4.2
+
+- added `.fix` parameter to allow missing columns to be added
+  automatically as `NA` or as `iface` supplied default values (see
+  `type.default`)

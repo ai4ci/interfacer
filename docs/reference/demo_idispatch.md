@@ -1,9 +1,9 @@
-# Test the interfacer idispatch functions
+# Test the interfacer `idispatch` functions
 
 Allows testing from the context of an installed package this is here for
-testing purposes only. The majority of functions are tested in testthat
-but one or two need package infrastructure to test things like the
-documentation
+testing purposes only. The majority of functions are tested in
+`testthat` but one or two need package infrastructure to test things
+like the documentation
 
 ## Usage
 

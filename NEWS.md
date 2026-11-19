@@ -76,3 +76,11 @@ rigorous outside of package scope (e.g. `?demo_idispatch`)
 * No functional downstream impacts should be obvious unless anyone relying on 
 eager evaluation in previous versions of `idispatch`
 
+# interfacer 0.4.1
+
+* Minor usability fixes for `@iparam` tags.
+
+# interfacer 0.4.2
+
+* added `.fix` parameter to allow missing columns to be added automatically as
+`NA` or as `iface` supplied default values (see `type.default`)

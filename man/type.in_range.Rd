@@ -26,12 +26,12 @@ This is anticipated to be part of a \code{iface} rule e.g.
 \code{iface(test_col = integer + in_range(-10,10) ~ "An integer from -10 to 10")}
 }
 \examples{
-type.in_range(0,10,TRUE,TRUE)(0:10)
-try(type.in_range(0,10,TRUE,FALSE)(0:10))
-try(type.in_range(0,10,FALSE)(0:10))
-type.in_range(0,10,FALSE,TRUE)(1:10)
-type.in_range(0,10,TRUE,FALSE)(0:9)
-type.in_range(0,Inf,FALSE,FALSE)(1:9)
-try(type.in_range(0,10)(1:99))
+type.in_range(0, 10, TRUE, TRUE)(0:10)
+try(type.in_range(0, 10, TRUE, FALSE)(0:10))
+try(type.in_range(0, 10, FALSE)(0:10))
+type.in_range(0, 10, FALSE, TRUE)(1:10)
+type.in_range(0, 10, TRUE, FALSE)(0:9)
+type.in_range(0, Inf, FALSE, FALSE)(1:9)
+try(type.in_range(0, 10)(1:99))
 }
 \concept{rules}

@@ -2,12 +2,20 @@
 
 `ivalidate(...)` is intended to be used within a function to check the
 validity of a data frame parameter (usually the first parameter) against
-an `ispec` which is given as a default value of a formal parameter.
+an `iface` specification which is given as a default value of a formal
+parameter.
 
 ## Usage
 
 ``` r
-ivalidate(df = NULL, ..., .imap = imapper(), .prune = FALSE, .default = NULL)
+ivalidate(
+  df = NULL,
+  ...,
+  .imap = imapper(),
+  .prune = FALSE,
+  .fix = FALSE,
+  .default = NULL
+)
 ```
 
 ## Arguments
@@ -19,8 +27,7 @@ ivalidate(df = NULL, ..., .imap = imapper(), .prune = FALSE, .default = NULL)
 
 - ...:
 
-  not used but `ivalidate` should be included in call to inherit `.imap`
-  from the caller function.
+  not used.
 
 - .imap:
 
@@ -30,10 +37,15 @@ ivalidate(df = NULL, ..., .imap = imapper(), .prune = FALSE, .default = NULL)
 
   get rid of excess columns that are not in the spec.
 
+- .fix:
+
+  add in missing columns with `NA` or default values as defined in the
+  spec
+
 - .default:
 
-  a default dataframe conforming to the specification. This overrides
-  any defaults defined in the interface specification
+  a default dataframe conforming to the spec. This overrides any
+  defaults defined in the enclosing function formal defaults
 
 ## Value
 

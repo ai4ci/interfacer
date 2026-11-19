@@ -26,10 +26,6 @@ demo_ireturn_tag(mydata = i_test_extn, ...)
 
   not used
 
-- another:
-
-  an example
-
 ## Value
 
 a test output, format will be automatically documented

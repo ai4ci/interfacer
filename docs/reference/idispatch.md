@@ -10,7 +10,7 @@ for dispatch.
 ## Usage
 
 ``` r
-idispatch(x, ..., .default = NULL, .prune = FALSE)
+idispatch(x, ..., .default = NULL, .prune = FALSE, .fix = FALSE)
 ```
 
 ## Arguments
@@ -34,6 +34,11 @@ idispatch(x, ..., .default = NULL, .prune = FALSE)
 
   get rid of excess columns that are not in the spec.
 
+- .fix:
+
+  add in missing columns with NA or default values as defined in the .
+  spec
+
 ## Value
 
 the result of dispatching the dataframe to the first function that
@@ -43,13 +48,14 @@ passed if a dataframe can be coerced to the `iface` specified format.
 ## Examples
 
 ``` r
-i1 = iface( col1 = integer ~ "An integer column" )
-i2 = iface( col2 = integer ~ "A different integer column" )
+i1 = iface(col1 = integer ~ "An integer column")
+i2 = iface(col2 = integer ~ "A different integer column")
 
 # this is an example function that would typically be inside a package, and
 # is exported from the package.
 extract_mean = function(df, ...) {
-  idispatch(df,
+  idispatch(
+    df,
     extract_mean.i1 = i1,
     extract_mean.i2 = i2
   )
@@ -66,19 +72,19 @@ extract_mean.i1 = function(df = i1, ...) {
 
 extract_mean.i2 = function(df = i2, uplift = 1, ...) {
   message("using i2")
-  mean(df$col2)+uplift
+  mean(df$col2) + uplift
 }
 
 # this input matches `i2` and the `extract_mean` call is dispatched
 # via `extract_mean.i2`
-test = tibble::tibble( col2 = 1:10 )
+test = tibble::tibble(col2 = 1:10)
 tmp = extract_mean(test, uplift = 50, this_env = TRUE)
 #> using i2
 testthat::expect_equal(tmp, 55.5)
 
 # this input matches `i1` and the `extract_mean` call is dispatched
 # via `extract_mean.i1` and the uplift is not applied
-test2 = tibble::tibble( col1 = 1:10 )
+test2 = tibble::tibble(col1 = 1:10)
 tmp2 = extract_mean(test2, uplift = 50)
 #> using i1
 testthat::expect_equal(tmp2, 5.5)
@@ -90,7 +96,7 @@ testthat::expect_equal(tmp3, 11)
 
 # This input does not match any of the allowable input specifications and
 # generates an error.
-test3 = tibble::tibble( wrong_col = 1:10 )
+test3 = tibble::tibble(wrong_col = 1:10)
 try(extract_mean(test3, uplift = 50))
 #> Error : the parameter in extract_mean(...) does not match any of the expected formats.
 #> extract_mean.i1 - Error : missing columns in the `df` parameter of `extract_mean.i1(...)`.

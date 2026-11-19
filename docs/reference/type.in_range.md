@@ -38,18 +38,18 @@ error if not
 ## Examples
 
 ``` r
-type.in_range(0,10,TRUE,TRUE)(0:10)
+type.in_range(0, 10, TRUE, TRUE)(0:10)
 #>  [1]  0  1  2  3  4  5  6  7  8  9 10
-try(type.in_range(0,10,TRUE,FALSE)(0:10))
+try(type.in_range(0, 10, TRUE, FALSE)(0:10))
 #> Error : values not in range: 0 ≤ x < 10
-try(type.in_range(0,10,FALSE)(0:10))
+try(type.in_range(0, 10, FALSE)(0:10))
 #> Error : values not in range: 0 < x ≤ 10
-type.in_range(0,10,FALSE,TRUE)(1:10)
+type.in_range(0, 10, FALSE, TRUE)(1:10)
 #>  [1]  1  2  3  4  5  6  7  8  9 10
-type.in_range(0,10,TRUE,FALSE)(0:9)
+type.in_range(0, 10, TRUE, FALSE)(0:9)
 #>  [1] 0 1 2 3 4 5 6 7 8 9
-type.in_range(0,Inf,FALSE,FALSE)(1:9)
+type.in_range(0, Inf, FALSE, FALSE)(1:9)
 #> [1] 1 2 3 4 5 6 7 8 9
-try(type.in_range(0,10)(1:99))
+try(type.in_range(0, 10)(1:99))
 #> Error : values not in range: 0 ≤ x ≤ 10
 ```

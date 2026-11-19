@@ -18,7 +18,7 @@ dataframe (correctly grouped), and other named parameters here are looked
 for in the enclosing function call. The function \emph{must} return a dataframe.}
 
 \item{...}{passed onto \code{iconvert} this could be used to supply
-\code{.prune} parameters. triple dot parameters in the enclosing function will
+\code{.prune} or\code{.fix} parameters. triple dot parameters in the enclosing function will
 be separately handled and automatically passed to \code{fn} so in general should
 not be passed to \code{igroup_process} as an intermediary although it probably
 won't hurt. This behaviour is similar to \code{NextMethod} in S3 method
@@ -49,22 +49,22 @@ be passed to \code{fn} and they should have compatible method signatures.
 # This specification requires that the dataframe is grouped only by the color
 # column
 i_diamond_price = interfacer::iface(
-  color = enum(`D`,`E`,`F`,`G`,`H`,`I`,`J`, .ordered=TRUE) ~ "the color column",
+  color = enum(`D`, `E`, `F`, `G`, `H`, `I`, `J`, .ordered = TRUE) ~ "the color column",
   price = integer ~ "the price column",
-  .groups = ~ color
+  .groups = ~color
 )
 
 # An example function which would be exported in a package
 # This function expects a dataframe with a colour and price column, grouped
 # by price.
 mean_price_by_colour = function(df = i_diamond_price, extra_param = ".") {
-
   # When called with a dataframe with extra groups `igroup_process` will
   # regroup the dataframe according to the structure
   # defined for `i_diamond_price` and apply the inner function to each group
   # after first calling `ivalidate` on each group.
 
-  igroup_process(df,
+  igroup_process(
+    df,
 
     # the real work of this function is provided as an anonymous inner
     # function (but can be any other function e.g. package private function
@@ -78,7 +78,6 @@ mean_price_by_colour = function(df = i_diamond_price, extra_param = ".") {
       if (nrow(.groupdata) == 0) message("zero length group data")
       return(df \%>\% dplyr::summarise(mean_price = mean(price)))
     }
-
   )
 }
 
@@ -105,21 +104,22 @@ ggplot2::diamonds \%>\%
 # if it is used recursively:
 
 recursive_example = function(df = i_diamond_price) {
-
   # call main function recursively if additional groups detected
   igroup_process(df, recursive_example)
   # N.B. this also works if the second argument is omitted e.g.:
   # igroup_process(df)
 
   # otherwise proceed with function as normal
-  return(tibble::tibble("rows detected:"=nrow(df)))
+  return(tibble::tibble("rows detected:" = nrow(df)))
 }
 
-ggplot2::diamonds \%>\% dplyr::group_by(color) \%>\%
-   recursive_example() \%>\%
-   dplyr::glimpse()
-ggplot2::diamonds \%>\% dplyr::group_by(cut,clarity,color) \%>\%
-   recursive_example() \%>\%
-   dplyr::glimpse()
+ggplot2::diamonds \%>\%
+  dplyr::group_by(color) \%>\%
+  recursive_example() \%>\%
+  dplyr::glimpse()
+ggplot2::diamonds \%>\%
+  dplyr::group_by(cut, clarity, color) \%>\%
+  recursive_example() \%>\%
+  dplyr::glimpse()
 }
 \concept{interface}

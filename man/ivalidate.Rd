@@ -5,21 +5,30 @@
 \title{Perform interface checks on dataframe inputs using enclosing function formal
 parameter definitions}
 \usage{
-ivalidate(df = NULL, ..., .imap = imapper(), .prune = FALSE, .default = NULL)
+ivalidate(
+  df = NULL,
+  ...,
+  .imap = imapper(),
+  .prune = FALSE,
+  .fix = FALSE,
+  .default = NULL
+)
 }
 \arguments{
 \item{df}{a dataframe - if missing then the first parameter of the calling
 function is assumed to be a dataframe.}
 
-\item{...}{not used but \code{ivalidate} should be included in call to inherit
-\code{.imap} from the caller function.}
+\item{...}{not used.}
 
 \item{.imap}{a set of mappings as an \code{imapper} object.}
 
 \item{.prune}{get rid of excess columns that are not in the spec.}
 
-\item{.default}{a default dataframe conforming to the specification. This
-overrides any defaults defined in the interface specification}
+\item{.fix}{add in missing columns with \code{NA} or default values as defined in the
+spec}
+
+\item{.default}{a default dataframe conforming to the spec. This
+overrides any defaults defined in the enclosing function formal defaults}
 }
 \value{
 a dataframe based on \code{df} with validity checks passed and \code{.imap}
@@ -27,7 +36,7 @@ mappings applied if present
 }
 \description{
 \code{ivalidate(...)} is intended to be used within a function to check the validity of a data
-frame parameter (usually the first parameter) against an \code{ispec} which is
+frame parameter (usually the first parameter) against an \code{iface} specification which is
 given as a default value of a formal parameter.
 }
 \examples{

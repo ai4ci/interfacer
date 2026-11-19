@@ -261,7 +261,8 @@ EP/Y028392/1](https://gtr.ukri.org/projects?ref=EP%2FY028392%2F1).
   Support for `@ireturn` tags
 
 - [`use_dataframe()`](https://ai4ci.github.io/interfacer/reference/use_dataframe.md)
-  : Use a dataframe in a package including structure based documentation
+  **\[deprecated\]** : Use a dataframe in a package including structure
+  based documentation
 
 - [`use_iface()`](https://ai4ci.github.io/interfacer/reference/use_iface.md)
   : Generate interfacer code for a dataframe
@@ -291,6 +292,9 @@ EP/Y028392/1](https://gtr.ukri.org/projects?ref=EP%2FY028392%2F1).
   :
 
   Test if an `iface` parameter was supplied to a function
+
+- [`iris`](https://ai4ci.github.io/interfacer/reference/iris.md) : The
+  iris dataset
 
 - [`is_col_present()`](https://ai4ci.github.io/interfacer/reference/is_col_present.md)
   : Check for existence of a set of columns in a dataframe

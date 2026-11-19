@@ -1,8 +1,6 @@
 # Use a dataframe in a package including structure based documentation
 
-Using the interfacer framework you can document data during development.
-This provides the basic documentation framework for a dataset based on a
-dataframe in the correct format into the right place.
+**\[deprecated\]**
 
 ## Usage
 
@@ -39,6 +37,10 @@ use_dataframe(
 nothing, used for side effects.
 
 ## Details
+
+Using the interfacer framework you can document data during development.
+This provides the basic documentation framework for a dataset based on a
+dataframe in the correct format into the right place.
 
 If this is your only use case for `interfacer` then you will not need to
 import `interfacer` in your package, as none of the generated code will
